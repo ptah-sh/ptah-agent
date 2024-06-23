@@ -71,22 +71,13 @@ func (a *Agent) Start(ctx context.Context) error {
 	log.Println("connected to server, poll interval", settings.Settings.PollInterval)
 
 	for {
-		time.Sleep(time.Duration(settings.Settings.PollInterval) * time.Second)
-
-		nextTaskRes, err := a.ptah.GetNextTask(ctx)
+		taskID, task, err := a.getNextTask(ctx)
 		if err != nil {
 			log.Println("can't get the next task", err)
-
-			continue
 		}
 
-		if nextTaskRes == nil {
-			continue
-		}
-
-		task, err := parseTask(nextTaskRes.TaskType, nextTaskRes.Payload)
-		if err != nil {
-			log.Println("can't parse task", err)
+		if task == nil {
+			time.Sleep(time.Duration(settings.Settings.PollInterval) * time.Second)
 
 			continue
 		}
@@ -94,15 +85,35 @@ func (a *Agent) Start(ctx context.Context) error {
 		result, err := executor.executeTask(ctx, task)
 		// TODO: store the result to re-send it once connection to the ptah server is restored
 		if err == nil {
-			if err = a.ptah.CompleteTask(ctx, nextTaskRes.ID, result); err != nil {
+			if err = a.ptah.CompleteTask(ctx, taskID, result); err != nil {
 				log.Println("can't complete task", err)
 			}
 		} else {
-			if err = a.ptah.FailTask(ctx, nextTaskRes.ID, &ptahClient.TaskError{
+			if err = a.ptah.FailTask(ctx, taskID, &ptahClient.TaskError{
 				Message: err.Error(),
 			}); err != nil {
 				log.Println("can't fail task", err)
 			}
 		}
 	}
+}
+
+func (a *Agent) getNextTask(ctx context.Context) (taskId int, task interface{}, err error) {
+	nextTaskRes, err := a.ptah.GetNextTask(ctx)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	if nextTaskRes == nil {
+		return 0, nil, nil
+	}
+
+	task, err = parseTask(nextTaskRes.TaskType, nextTaskRes.Payload)
+	if err != nil {
+		log.Println("can't parse task: ", err)
+
+		return 0, nil, err
+	}
+
+	return nextTaskRes.ID, task, nil
 }

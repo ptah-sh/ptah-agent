@@ -6,7 +6,8 @@ import (
 )
 
 type GetNextTaskRes struct {
-	task
+	taskReq
+
 	TaskType int    `json:"type"`
 	Payload  []byte `json:"-"`
 }

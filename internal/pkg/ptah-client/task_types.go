@@ -1,10 +1,15 @@
 package ptah_client
 
+import (
+	"github.com/docker/docker/api/types/swarm"
+)
+import "github.com/docker/docker/api/types/network"
+
 type TaskError struct {
 	Message string `json:"message"`
 }
 
-type task struct {
+type taskReq struct {
 	ID int `json:"id"`
 }
 
@@ -15,10 +20,11 @@ type dockerIdRes struct {
 }
 
 type CreateNetworkReq struct {
-	task
+	taskReq
 
 	Payload struct {
-		Name string `json:"name"`
+		NetworkName          string
+		NetworkCreateOptions network.CreateOptions
 	}
 }
 
@@ -27,15 +33,51 @@ type CreateNetworkRes struct {
 }
 
 type InitSwarmReq struct {
-	task
+	taskReq
 
 	Payload struct {
-		Name          string `json:"name"`
-		AdvertiseAddr string `json:"advertiseAddr"`
-		Force         bool   `json:"forceNewCluster"`
+		SwarmInitRequest swarm.InitRequest
 	}
 }
 
 type InitSwarmRes struct {
+	dockerIdRes
+}
+
+type CreateConfigReq struct {
+	taskReq
+
+	Payload struct {
+		SwarmConfigSpec swarm.ConfigSpec
+	}
+}
+
+type CreateConfigRes struct {
+	dockerIdRes
+}
+
+type CreateSecretReq struct {
+	taskReq
+
+	Payload struct {
+		SwarmSecretSpec swarm.SecretSpec
+	}
+}
+
+type CreateSecretRes struct {
+	dockerIdRes
+}
+
+type CreateServiceReq struct {
+	taskReq
+
+	Payload struct {
+		AuthConfigName       string
+		SecretVarsConfigName string
+		SwarmServiceSpec     swarm.ServiceSpec
+	}
+}
+
+type CreateServiceRes struct {
 	dockerIdRes
 }

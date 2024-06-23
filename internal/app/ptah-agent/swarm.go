@@ -3,19 +3,20 @@ package ptah_agent
 import (
 	"context"
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
-
-	"github.com/docker/docker/api/types/swarm"
+	"log"
+	"runtime"
 )
 
-func (e *taskExecutor) initSwarm(ctx context.Context, req t.InitSwarmReq) (*t.InitSwarmRes, error) {
+func (e *taskExecutor) initSwarm(ctx context.Context, req *t.InitSwarmReq) (*t.InitSwarmRes, error) {
 	var res t.InitSwarmRes
 
-	swarmId, err := e.docker.SwarmInit(ctx, swarm.InitRequest{
-		ListenAddr:      "0.0.0.0:2377",
-		AdvertiseAddr:   req.Payload.AdvertiseAddr,
-		ForceNewCluster: req.Payload.Force,
-	})
+	if runtime.GOOS == "darwin" {
+		log.Println("Docker Desktop on MacOS doesn't support AdvertiseAddr, using 127.0.0.1:2377")
 
+		req.Payload.SwarmInitRequest.AdvertiseAddr = "127.0.0.1:2377"
+	}
+
+	swarmId, err := e.docker.SwarmInit(ctx, req.Payload.SwarmInitRequest)
 	if err != nil {
 		return nil, err
 	}

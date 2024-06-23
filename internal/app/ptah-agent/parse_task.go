@@ -11,21 +11,34 @@ func parseTask(taskType int, payload []byte) (interface{}, error) {
 	switch taskType {
 	case 0:
 		var createNetwork ptahClient.CreateNetworkReq
-		err := json.Unmarshal(payload, &createNetwork)
-		if err != nil {
-			return nil, err
-		}
 
-		return createNetwork, nil
+		return unmarshalTask(payload, &createNetwork)
 	case 1:
 		var initSwarm ptahClient.InitSwarmReq
-		err := json.Unmarshal(payload, &initSwarm)
-		if err != nil {
-			return nil, err
-		}
 
-		return initSwarm, nil
+		return unmarshalTask(payload, &initSwarm)
+	case 2:
+		var createConfig ptahClient.CreateConfigReq
+
+		return unmarshalTask(payload, &createConfig)
+	case 3:
+		var createSecret ptahClient.CreateSecretReq
+
+		return unmarshalTask(payload, &createSecret)
+	case 4:
+		var createService ptahClient.CreateServiceReq
+
+		return unmarshalTask(payload, &createService)
 	default:
-		return nil, fmt.Errorf("unknown task type %d", taskType)
+		return nil, fmt.Errorf("parse task: unknown task type %d", taskType)
 	}
+}
+
+func unmarshalTask(payload []byte, task interface{}) (interface{}, error) {
+	err := json.Unmarshal(payload, &task)
+	if err != nil {
+		return nil, err
+	}
+
+	return task, nil
 }
