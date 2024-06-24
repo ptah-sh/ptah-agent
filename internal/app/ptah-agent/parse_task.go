@@ -10,25 +10,29 @@ import (
 func parseTask(taskType int, payload []byte) (interface{}, error) {
 	switch taskType {
 	case 0:
-		var createNetwork ptahClient.CreateNetworkReq
+		var req ptahClient.CreateNetworkReq
 
-		return unmarshalTask(payload, &createNetwork)
+		return unmarshalTask(payload, &req)
 	case 1:
-		var initSwarm ptahClient.InitSwarmReq
+		var req ptahClient.InitSwarmReq
 
-		return unmarshalTask(payload, &initSwarm)
+		return unmarshalTask(payload, &req)
 	case 2:
-		var createConfig ptahClient.CreateConfigReq
+		var req ptahClient.CreateConfigReq
 
-		return unmarshalTask(payload, &createConfig)
+		return unmarshalTask(payload, &req)
 	case 3:
-		var createSecret ptahClient.CreateSecretReq
+		var req ptahClient.CreateSecretReq
 
-		return unmarshalTask(payload, &createSecret)
+		return unmarshalTask(payload, &req)
 	case 4:
-		var createService ptahClient.CreateServiceReq
+		var req ptahClient.CreateServiceReq
 
-		return unmarshalTask(payload, &createService)
+		return unmarshalTask(payload, &req)
+	case 5:
+		var req ptahClient.ApplyCaddyConfigReq
+
+		return unmarshalTask(payload, &req)
 	default:
 		return nil, fmt.Errorf("parse task: unknown task type %d", taskType)
 	}

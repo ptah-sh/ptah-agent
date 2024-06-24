@@ -81,3 +81,14 @@ type CreateServiceReq struct {
 type CreateServiceRes struct {
 	dockerIdRes
 }
+
+type ApplyCaddyConfigReq struct {
+	taskReq
+
+	Payload struct {
+		Caddy map[string]interface{} `json:"caddy"`
+	} `json:"payload"`
+}
+
+type ApplyCaddyConfigRes struct {
+}

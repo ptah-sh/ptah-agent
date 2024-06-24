@@ -3,9 +3,11 @@ package ptah_agent
 import (
 	"context"
 	dockerClient "github.com/docker/docker/client"
+	caddyClient "github.com/ptah-sh/ptah-agent/internal/pkg/caddy-client"
 	"github.com/ptah-sh/ptah-agent/internal/pkg/networks"
 	ptahClient "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -13,12 +15,14 @@ type Agent struct {
 	version string
 	ptah    *ptahClient.Client
 	docker  *dockerClient.Client
+	caddy   *caddyClient.Client
 }
 
 func New(version string, baseUrl string, ptahToken string) *Agent {
 	return &Agent{
 		version: version,
 		ptah:    ptahClient.New(baseUrl, ptahToken),
+		caddy:   caddyClient.New("http://127.0.0.1:2019", http.DefaultClient),
 	}
 }
 
@@ -66,6 +70,7 @@ func (a *Agent) Start(ctx context.Context) error {
 
 	executor := &taskExecutor{
 		docker: a.docker,
+		caddy:  a.caddy,
 	}
 
 	log.Println("connected to server, poll interval", settings.Settings.PollInterval)

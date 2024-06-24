@@ -15,7 +15,7 @@ var version string = "dev"
 
 func main() {
 	baseUrl := "http://localhost:8000/api/_nodes/v1"
-	ptahToken := "LO0ey15lB2jbObcLWsAUxSIHG3PsNGTR1HQbIwUkju"
+	ptahToken := "kyOUTV240QK6agzdVAlk9SMIaDixV7lKqIJRfavxZd"
 
 	agent := ptahAgent.New(version, baseUrl, ptahToken)
 
