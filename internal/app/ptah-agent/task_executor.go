@@ -33,6 +33,8 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.updateDockerService(ctx, task.(*t.UpdateServiceReq))
 	case *t.UpdateCurrentNodeReq:
 		return e.updateCurrentNode(ctx, task.(*t.UpdateCurrentNodeReq))
+	case *t.DeleteServiceReq:
+		return e.deleteDockerService(ctx, task.(*t.DeleteServiceReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}

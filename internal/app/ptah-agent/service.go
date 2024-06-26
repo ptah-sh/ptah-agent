@@ -147,3 +147,30 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, spec swarm.Ser
 
 	return &spec, nil
 }
+
+func (e *taskExecutor) deleteDockerService(ctx context.Context, req *t.DeleteServiceReq) (*t.DeleteServiceRes, error) {
+	var res t.DeleteServiceRes
+
+	services, err := e.docker.ServiceList(ctx, types.ServiceListOptions{
+		Filters: filters.NewArgs(
+			filters.Arg("name", req.ServiceName),
+		),
+	})
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "delete docker service")
+	}
+
+	if len(services) == 0 {
+		// TODO: return warnings if the service has not been found
+		//return nil, fmt.Errorf("service with name %s not found", req.ServiceName)
+		return nil, nil
+	}
+
+	err = e.docker.ServiceRemove(ctx, services[0].ID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "delete docker service")
+	}
+
+	return &res, nil
+}

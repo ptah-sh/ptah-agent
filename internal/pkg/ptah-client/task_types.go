@@ -98,3 +98,10 @@ type UpdateCurrentNodeReq struct {
 
 type UpdateCurrentNodeRes struct {
 }
+
+type DeleteServiceReq struct {
+	ServiceName string
+}
+
+type DeleteServiceRes struct {
+}
