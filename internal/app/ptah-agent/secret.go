@@ -8,7 +8,7 @@ import (
 func (e *taskExecutor) createDockerSecret(ctx context.Context, req *t.CreateSecretReq) (*t.CreateSecretRes, error) {
 	var res t.CreateSecretRes
 
-	response, err := e.docker.SecretCreate(ctx, req.Payload.SwarmSecretSpec)
+	response, err := e.docker.SecretCreate(ctx, req.SwarmSecretSpec)
 	if err != nil {
 		return nil, err
 	}

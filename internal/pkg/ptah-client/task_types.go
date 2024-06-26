@@ -20,12 +20,8 @@ type dockerIdRes struct {
 }
 
 type CreateNetworkReq struct {
-	taskReq
-
-	Payload struct {
-		NetworkName          string
-		NetworkCreateOptions network.CreateOptions
-	}
+	NetworkName          string
+	NetworkCreateOptions network.CreateOptions
 }
 
 type CreateNetworkRes struct {
@@ -33,11 +29,7 @@ type CreateNetworkRes struct {
 }
 
 type InitSwarmReq struct {
-	taskReq
-
-	Payload struct {
-		SwarmInitRequest swarm.InitRequest
-	}
+	SwarmInitRequest swarm.InitRequest
 }
 
 type InitSwarmRes struct {
@@ -45,11 +37,7 @@ type InitSwarmRes struct {
 }
 
 type CreateConfigReq struct {
-	taskReq
-
-	Payload struct {
-		SwarmConfigSpec swarm.ConfigSpec
-	}
+	SwarmConfigSpec swarm.ConfigSpec
 }
 
 type CreateConfigRes struct {
@@ -57,38 +45,56 @@ type CreateConfigRes struct {
 }
 
 type CreateSecretReq struct {
-	taskReq
-
-	Payload struct {
-		SwarmSecretSpec swarm.SecretSpec
-	}
+	SwarmSecretSpec swarm.SecretSpec
 }
 
 type CreateSecretRes struct {
 	dockerIdRes
 }
 
-type CreateServiceReq struct {
-	taskReq
+type ServicePayload struct {
+	AuthConfigName   string
+	SwarmServiceSpec swarm.ServiceSpec
+}
 
-	Payload struct {
-		AuthConfigName       string
-		SecretVarsConfigName string
-		SwarmServiceSpec     swarm.ServiceSpec
-	}
+type SecretVars struct {
+	ConfigName   string
+	ConfigLabels map[string]string
+	Values       map[string]string
+
+	Preserve           []string
+	PreserveFromConfig string
+}
+
+type CreateServiceReq struct {
+	ServicePayload
+
+	SecretVars SecretVars
 }
 
 type CreateServiceRes struct {
 	dockerIdRes
 }
 
-type ApplyCaddyConfigReq struct {
-	taskReq
+type UpdateServiceReq struct {
+	ServicePayload
 
-	Payload struct {
-		Caddy map[string]interface{} `json:"caddy"`
-	} `json:"payload"`
+	SecretVars SecretVars
+}
+
+type UpdateServiceRes struct {
+}
+
+type ApplyCaddyConfigReq struct {
+	Caddy map[string]interface{} `json:"caddy"`
 }
 
 type ApplyCaddyConfigRes struct {
+}
+
+type UpdateCurrentNodeReq struct {
+	NodeSpec swarm.NodeSpec
+}
+
+type UpdateCurrentNodeRes struct {
 }

@@ -3,6 +3,7 @@ package ptah_agent
 import (
 	"context"
 	dockerClient "github.com/docker/docker/client"
+	"github.com/pkg/errors"
 	caddyClient "github.com/ptah-sh/ptah-agent/internal/pkg/caddy-client"
 	"github.com/ptah-sh/ptah-agent/internal/pkg/networks"
 	ptahClient "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
@@ -106,7 +107,7 @@ func (a *Agent) Start(ctx context.Context) error {
 func (a *Agent) getNextTask(ctx context.Context) (taskId int, task interface{}, err error) {
 	nextTaskRes, err := a.ptah.GetNextTask(ctx)
 	if err != nil {
-		return 0, nil, err
+		return 0, nil, errors.Wrapf(err, "agent.getNextTask")
 	}
 
 	if nextTaskRes == nil {
@@ -115,9 +116,7 @@ func (a *Agent) getNextTask(ctx context.Context) (taskId int, task interface{}, 
 
 	task, err = parseTask(nextTaskRes.TaskType, nextTaskRes.Payload)
 	if err != nil {
-		log.Println("can't parse task: ", err)
-
-		return 0, nil, err
+		return 0, nil, errors.Wrapf(err, "agent.getNextTask: parse task %d failed", nextTaskRes.TaskType)
 	}
 
 	return nextTaskRes.ID, task, nil

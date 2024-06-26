@@ -6,69 +6,124 @@ import (
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/swarm"
+	"github.com/pkg/errors"
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
 func (e *taskExecutor) createDockerService(ctx context.Context, req *t.CreateServiceReq) (*t.CreateServiceRes, error) {
 	var res t.CreateServiceRes
 
-	if req.Payload.AuthConfigName != "" {
-		// read auth data from the docker config
+	spec, err := e.prepareServicePayload(ctx, req.SwarmServiceSpec, req.SecretVars)
+	if err != nil {
+		return nil, errors.Wrapf(err, "create docker service")
 	}
 
-	if req.Payload.SecretVarsConfigName != "" {
-		configs, err := e.docker.ConfigList(ctx, types.ConfigListOptions{
-			Filters: filters.NewArgs(
-				filters.Arg("name", req.Payload.SecretVarsConfigName),
-			),
+	response, err := e.docker.ServiceCreate(ctx, *spec, types.ServiceCreateOptions{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "create docker service")
+	}
+
+	res.Docker.ID = response.ID
+
+	return &res, nil
+}
+
+func (e *taskExecutor) updateDockerService(ctx context.Context, req *t.UpdateServiceReq) (*t.UpdateServiceRes, error) {
+	var res t.UpdateServiceRes
+
+	spec, err := e.prepareServicePayload(ctx, req.SwarmServiceSpec, req.SecretVars)
+	if err != nil {
+		return nil, errors.Wrapf(err, "update docker service")
+	}
+
+	services, err := e.docker.ServiceList(ctx, types.ServiceListOptions{
+		Filters: filters.NewArgs(
+			filters.Arg("name", req.SwarmServiceSpec.Name),
+		),
+	})
+
+	if err != nil {
+		return nil, errors.Wrapf(err, "update docker service")
+	}
+
+	if len(services) > 1 {
+		return nil, fmt.Errorf("multiple services with name %s found", req.SwarmServiceSpec.Name)
+	}
+
+	if len(services) == 0 {
+		return nil, fmt.Errorf("service with name %s not found", req.SwarmServiceSpec.Name)
+	}
+
+	service := services[0]
+
+	_, err = e.docker.ServiceUpdate(ctx, service.ID, service.Version, *spec, types.ServiceUpdateOptions{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "update docker service")
+	}
+
+	return &res, nil
+}
+
+func (e *taskExecutor) prepareServicePayload(ctx context.Context, spec swarm.ServiceSpec, secretVars t.SecretVars) (*swarm.ServiceSpec, error) {
+	if secretVars.ConfigName != "" {
+		newVars := make(map[string]string)
+
+		for key, value := range secretVars.Values {
+			newVars[key] = value
+		}
+
+		if secretVars.PreserveFromConfig != "" {
+			preserveConfig, err := e.getConfigByName(ctx, secretVars.PreserveFromConfig)
+			if err != nil {
+				return nil, errors.Wrapf(err, "get config by name %s", secretVars.PreserveFromConfig)
+			}
+
+			preservedVars := make(map[string]string)
+			err = json.Unmarshal(preserveConfig.Spec.Data, &preservedVars)
+			if err != nil {
+				return nil, errors.Wrapf(err, "unmarshal config %s", secretVars.PreserveFromConfig)
+			}
+
+			for _, key := range secretVars.Preserve {
+				if value, ok := preservedVars[key]; ok {
+					newVars[key] = value
+				}
+			}
+		}
+
+		newVarsJson, err := json.Marshal(newVars)
+		if err != nil {
+			return nil, errors.Wrapf(err, "marshal vars")
+		}
+
+		_, err = e.docker.ConfigCreate(ctx, swarm.ConfigSpec{
+			Annotations: swarm.Annotations{
+				Name:   secretVars.ConfigName,
+				Labels: secretVars.ConfigLabels,
+			},
+			Data: newVarsJson,
 		})
 
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "create config %s", secretVars.ConfigName)
 		}
 
-		if len(configs) > 1 {
-			return nil, fmt.Errorf("multiple configs with name %s found", req.Payload.SecretVarsConfigName)
-		}
-
-		if len(configs) == 0 {
-			return nil, fmt.Errorf("config with name %s not found", req.Payload.SecretVarsConfigName)
-		}
-
-		var secretVars []string
-		err = json.Unmarshal(configs[0].Spec.Data, &secretVars)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, secretVar := range secretVars {
-			req.Payload.SwarmServiceSpec.TaskTemplate.ContainerSpec.Env = append(req.Payload.SwarmServiceSpec.TaskTemplate.ContainerSpec.Env, secretVar)
+		for key, value := range newVars {
+			spec.TaskTemplate.ContainerSpec.Env = append(spec.TaskTemplate.ContainerSpec.Env, fmt.Sprintf("%s=%s", key, value))
 		}
 	}
 
-	for _, config := range req.Payload.SwarmServiceSpec.TaskTemplate.ContainerSpec.Configs {
-		configs, err := e.docker.ConfigList(ctx, types.ConfigListOptions{
-			Filters: filters.NewArgs(
-				filters.Arg("name", config.ConfigName),
-			),
-		})
-
+	for _, config := range spec.TaskTemplate.ContainerSpec.Configs {
+		cfg, err := e.getConfigByName(ctx, config.ConfigName)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "get config by name %s", config.ConfigName)
 		}
 
-		if len(configs) > 1 {
-			return nil, fmt.Errorf("multiple configs with name %s found", config.ConfigName)
-		}
-
-		if len(configs) == 0 {
-			return nil, fmt.Errorf("config with name %s not found", config.ConfigName)
-		}
-
-		config.ConfigID = configs[0].ID
+		config.ConfigID = cfg.ID
 	}
 
-	for _, secret := range req.Payload.SwarmServiceSpec.TaskTemplate.ContainerSpec.Secrets {
+	for _, secret := range spec.TaskTemplate.ContainerSpec.Secrets {
 		secrets, err := e.docker.SecretList(ctx, types.SecretListOptions{
 			Filters: filters.NewArgs(
 				filters.Arg("name", secret.SecretName),
@@ -76,7 +131,7 @@ func (e *taskExecutor) createDockerService(ctx context.Context, req *t.CreateSer
 		})
 
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "get secret by name %s", secret.SecretName)
 		}
 
 		if len(secrets) > 1 {
@@ -90,12 +145,5 @@ func (e *taskExecutor) createDockerService(ctx context.Context, req *t.CreateSer
 		secret.SecretID = secrets[0].ID
 	}
 
-	response, err := e.docker.ServiceCreate(ctx, req.Payload.SwarmServiceSpec, types.ServiceCreateOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	res.Docker.ID = response.ID
-
-	return &res, nil
+	return &spec, nil
 }

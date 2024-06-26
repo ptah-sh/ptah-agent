@@ -29,6 +29,10 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.createDockerService(ctx, task.(*t.CreateServiceReq))
 	case *t.ApplyCaddyConfigReq:
 		return e.applyCaddyConfig(ctx, task.(*t.ApplyCaddyConfigReq))
+	case *t.UpdateServiceReq:
+		return e.updateDockerService(ctx, task.(*t.UpdateServiceReq))
+	case *t.UpdateCurrentNodeReq:
+		return e.updateCurrentNode(ctx, task.(*t.UpdateCurrentNodeReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}

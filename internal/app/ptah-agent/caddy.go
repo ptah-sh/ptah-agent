@@ -8,7 +8,7 @@ import (
 func (e *taskExecutor) applyCaddyConfig(ctx context.Context, req *t.ApplyCaddyConfigReq) (*t.ApplyCaddyConfigRes, error) {
 	var res t.ApplyCaddyConfigRes
 
-	err := e.caddy.PostConfig(ctx, req.Payload.Caddy)
+	err := e.caddy.PostConfig(ctx, req.Caddy)
 	if err != nil {
 		return nil, err
 	}

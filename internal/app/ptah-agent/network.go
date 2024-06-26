@@ -8,7 +8,7 @@ import (
 func (e *taskExecutor) createDockerNetwork(ctx context.Context, req *t.CreateNetworkReq) (*t.CreateNetworkRes, error) {
 	var res t.CreateNetworkRes
 
-	response, err := e.docker.NetworkCreate(ctx, req.Payload.NetworkName, req.Payload.NetworkCreateOptions)
+	response, err := e.docker.NetworkCreate(ctx, req.NetworkName, req.NetworkCreateOptions)
 	if err != nil {
 		return nil, err
 	}

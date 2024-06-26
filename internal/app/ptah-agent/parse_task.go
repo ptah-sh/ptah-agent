@@ -6,40 +6,32 @@ import (
 	ptahClient "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
-// God Save Us.
-func parseTask(taskType int, payload []byte) (interface{}, error) {
+func parseTask(taskType int, payload string) (interface{}, error) {
 	switch taskType {
+
 	case 0:
-		var req ptahClient.CreateNetworkReq
-
-		return unmarshalTask(payload, &req)
+		return unmarshalTask(payload, &ptahClient.CreateNetworkReq{})
 	case 1:
-		var req ptahClient.InitSwarmReq
-
-		return unmarshalTask(payload, &req)
+		return unmarshalTask(payload, &ptahClient.InitSwarmReq{})
 	case 2:
-		var req ptahClient.CreateConfigReq
-
-		return unmarshalTask(payload, &req)
+		return unmarshalTask(payload, &ptahClient.CreateConfigReq{})
 	case 3:
-		var req ptahClient.CreateSecretReq
-
-		return unmarshalTask(payload, &req)
+		return unmarshalTask(payload, &ptahClient.CreateSecretReq{})
 	case 4:
-		var req ptahClient.CreateServiceReq
-
-		return unmarshalTask(payload, &req)
+		return unmarshalTask(payload, &ptahClient.CreateServiceReq{})
 	case 5:
-		var req ptahClient.ApplyCaddyConfigReq
-
-		return unmarshalTask(payload, &req)
+		return unmarshalTask(payload, &ptahClient.ApplyCaddyConfigReq{})
+	case 6:
+		return unmarshalTask(payload, &ptahClient.UpdateServiceReq{})
+	case 7:
+		return unmarshalTask(payload, &ptahClient.UpdateCurrentNodeReq{})
 	default:
 		return nil, fmt.Errorf("parse task: unknown task type %d", taskType)
 	}
 }
 
-func unmarshalTask(payload []byte, task interface{}) (interface{}, error) {
-	err := json.Unmarshal(payload, &task)
+func unmarshalTask(payload string, task interface{}) (interface{}, error) {
+	err := json.Unmarshal([]byte(payload), &task)
 	if err != nil {
 		return nil, err
 	}
