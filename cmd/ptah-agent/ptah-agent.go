@@ -6,16 +6,11 @@ import (
 	"log"
 )
 
-// TODO: apply this on CI
-//
-//	go build -o mybinary \
-//	  -ldflags "-X main.version=1.0.0" \
-//	  main.go
 var version string = "dev"
 
 func main() {
 	baseUrl := "http://localhost:8000/api/_nodes/v1"
-	ptahToken := "8JKoOtkGpe6E7zRgGBtKXyROcJ52nmfOqd93MVanvs"
+	ptahToken := "aSpD6hq28mIUbdfP0lh6HgqGXVNQRv4SLwNCTHLwFh"
 
 	agent := ptahAgent.New(version, baseUrl, ptahToken)
 
