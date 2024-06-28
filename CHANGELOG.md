@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0](https://github.com/ptah-sh/ptah-agent/compare/v0.0.1...v0.1.0) (2024-06-28)
+
+
+### Features
+
+* [#9](https://github.com/ptah-sh/ptah-agent/issues/9) add installation script ([deb738d](https://github.com/ptah-sh/ptah-agent/commit/deb738d63bdedd826cc2fb6d7360c144759c3da5))
+
 ## 0.0.1 (2024-06-27)
 
 
