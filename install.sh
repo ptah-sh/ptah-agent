@@ -191,7 +191,7 @@ Environment=PTAH_HOME=/home/$USER/ptah-agent
 Environment=PTAH_TOKEN=$PTAH_TOKEN
 Environment=PTAH_BASE_URL=$PTAH_BASE_URL
 Type=exec
-ExecStart=/home/$USER/ptah-agent/current/ptah-agent
+ExecStart=/home/$USER/ptah-agent/current
 Restart=always
 RestartSteps=5
 RestartSec=5
