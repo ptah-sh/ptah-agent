@@ -14,9 +14,9 @@ var version string = "dev"
 func main() {
 	baseUrl := os.Getenv("PTAH_BASE_URL")
 	if baseUrl == "" {
-		log.Println("PTAH_BASE_URL is not set, using http://localhost:8000")
+		log.Println("PTAH_BASE_URL is not set, using https://app.ptah.sh")
 
-		baseUrl = "http://localhost:8000"
+		baseUrl = "https://app.ptah.sh"
 	}
 
 	baseUrl = strings.Trim(baseUrl, "/")
@@ -24,9 +24,7 @@ func main() {
 
 	ptahToken := os.Getenv("PTAH_TOKEN")
 	if ptahToken == "" {
-		log.Println("PTAH_TOKEN is not set, using localhost-ptah-token")
-
-		ptahToken = "localhost-ptah-token"
+		log.Fatalln("PTAH_TOKEN is not set")
 	}
 
 	agent := ptahAgent.New(version, baseUrl, ptahToken)

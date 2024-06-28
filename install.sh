@@ -156,6 +156,8 @@ mkdir -p \$HOME/ptah-agent/versions/0.0.0
 
 curl -L https://github.com/ptah-sh/ptah-agent/releases/latest/download/ptah-agent-linux-x86_64 -o \$SEED_VERSION/ptah-agent
 
+chmod +x \$SEED_VERSION/ptah-agent
+
 ln -nsf \$SEED_VERSION/ptah-agent \$HOME/ptah-agent/current
 
 EOF
