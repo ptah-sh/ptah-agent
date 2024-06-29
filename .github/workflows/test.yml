@@ -1,12 +1,18 @@
 on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+    branches-ignore:
+      - release-please--*
   push:
     branches:
       - main
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
-      - run: go build -o ptah-agent-linux-x86_64 cmd/ptah-agent/ptah-agent.go
+      - run: go test **/*_test.go
