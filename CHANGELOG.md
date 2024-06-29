@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/ptah-sh/ptah-agent/compare/v0.1.0...v0.2.0) (2024-06-29)
+
+
+### Features
+
+* [#9](https://github.com/ptah-sh/ptah-agent/issues/9) improve naming of the resulting binary ([c434b5c](https://github.com/ptah-sh/ptah-agent/commit/c434b5c4d682728711c5a7a41f65d34295fa82d6))
+
+
+### Bug Fixes
+
+* [#9](https://github.com/ptah-sh/ptah-agent/issues/9) remove test step for now ([9b076ef](https://github.com/ptah-sh/ptah-agent/commit/9b076efa1e8c6eb6bf716468fea16ea634a5f1d5))
+* [#9](https://github.com/ptah-sh/ptah-agent/issues/9) try fix ci ([da728ea](https://github.com/ptah-sh/ptah-agent/commit/da728eaf90c30e248eaa6b81fa406b0287f5dfbf))
+
 ## [0.1.0](https://github.com/ptah-sh/ptah-agent/compare/v0.0.1...v0.1.0) (2024-06-28)
 
 
