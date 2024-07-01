@@ -13,16 +13,18 @@ import (
 )
 
 type Agent struct {
-	version string
+	Version string
 	ptah    *ptahClient.Client
+	rootDir string
 	docker  *dockerClient.Client
 	caddy   *caddyClient.Client
 }
 
-func New(version string, baseUrl string, ptahToken string) *Agent {
+func New(version string, baseUrl string, ptahToken string, rootDir string) *Agent {
 	return &Agent{
-		version: version,
+		Version: version,
 		ptah:    ptahClient.New(baseUrl, ptahToken),
+		rootDir: rootDir,
 		caddy:   caddyClient.New("http://127.0.0.1:2019", http.DefaultClient),
 	}
 }
@@ -48,7 +50,7 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 	}
 
 	startedReq := ptahClient.StartedReq{
-		Version: a.version,
+		Version: a.Version,
 	}
 
 	startedReq.Docker.Platform.Name = info.Name
@@ -70,8 +72,12 @@ func (a *Agent) Start(ctx context.Context) error {
 	}
 
 	executor := &taskExecutor{
-		docker: a.docker,
-		caddy:  a.caddy,
+		docker:  a.docker,
+		caddy:   a.caddy,
+		rootDir: a.rootDir,
+		// TODO: use channel instead?
+		stopAgentFlag: false,
+		agent:         a,
 	}
 
 	log.Println("connected to server, poll interval", settings.Settings.PollInterval)
@@ -101,7 +107,15 @@ func (a *Agent) Start(ctx context.Context) error {
 				log.Println("can't fail task", err)
 			}
 		}
+
+		if executor.stopAgentFlag {
+			log.Println("received stop signal, shutting down gracefully")
+
+			break
+		}
 	}
+
+	return nil
 }
 
 func (a *Agent) getNextTask(ctx context.Context) (taskId int, task interface{}, err error) {

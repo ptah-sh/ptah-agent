@@ -27,6 +27,12 @@ func parseTask(taskType int, payload string) (interface{}, error) {
 		return unmarshalTask(payload, &ptahClient.UpdateCurrentNodeReq{})
 	case 8:
 		return unmarshalTask(payload, &ptahClient.DeleteServiceReq{})
+	case 9:
+		return unmarshalTask(payload, &ptahClient.DownloadAgentUpgradeReq{})
+	case 10:
+		return unmarshalTask(payload, &ptahClient.UpdateAgentSymlinkReq{})
+	case 11:
+		return unmarshalTask(payload, &ptahClient.ConfirmAgentUpgradeReq{})
 	default:
 		return nil, fmt.Errorf("parse task: unknown task type %d", taskType)
 	}

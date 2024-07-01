@@ -150,9 +150,9 @@ set -e
 
 echo "Running in user space as \$(whoami)"
 
-SEED_VERSION="\$HOME/ptah-agent/versions/0.0.0"
+SEED_VERSION="\$HOME/ptah-agent/versions/v0.0.0"
 
-mkdir -p \$HOME/ptah-agent/versions/0.0.0
+mkdir -p \$HOME/ptah-agent/versions/v0.0.0
 
 curl -L https://github.com/ptah-sh/ptah-agent/releases/latest/download/ptah-agent-linux-x86_64.bin -o \$SEED_VERSION/ptah-agent
 
@@ -187,7 +187,7 @@ After=network.target
 [Service]
 User=$USER
 Group=$GROUP
-Environment=PTAH_HOME=/home/$USER/ptah-agent
+Environment=PTAH_ROOT_DIR=/home/$USER/ptah-agent
 Environment=PTAH_TOKEN=$PTAH_TOKEN
 Environment=PTAH_BASE_URL=$PTAH_BASE_URL
 Type=exec

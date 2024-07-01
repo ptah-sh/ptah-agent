@@ -6,6 +6,7 @@ import (
 	ptahAgent "github.com/ptah-sh/ptah-agent/internal/app/ptah-agent"
 	"log"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -27,9 +28,24 @@ func main() {
 		log.Fatalln("PTAH_TOKEN is not set")
 	}
 
-	agent := ptahAgent.New(version, baseUrl, ptahToken)
+	rootDir := os.Getenv("PTAH_ROOT_DIR")
+	if rootDir == "" {
+		log.Fatalln("PTAH_ROOT_DIR is not set")
+	}
 
-	err := agent.Start(context.Background())
+	_, err := os.Stat(rootDir)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	_, err = os.Stat(path.Join(rootDir, "versions"))
+	if err != nil {
+		log.Fatalln("versions dir not found:", err)
+	}
+
+	agent := ptahAgent.New(version, baseUrl, ptahToken, rootDir)
+
+	err = agent.Start(context.Background())
 	if err != nil {
 		log.Fatalln(err)
 	}

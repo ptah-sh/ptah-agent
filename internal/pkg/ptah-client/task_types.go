@@ -105,3 +105,27 @@ type DeleteServiceReq struct {
 
 type DeleteServiceRes struct {
 }
+
+type DownloadAgentUpgradeReq struct {
+	TargetVersion string
+	DownloadUrl   string
+}
+
+type DownloadAgentUpgradeRes struct {
+	FileSize     int `json:"fileSize"`
+	DownloadTime int `json:"downloadTime"`
+}
+
+type UpdateAgentSymlinkReq struct {
+	TargetVersion string
+}
+
+type UpdateAgentSymlinkRes struct {
+}
+
+type ConfirmAgentUpgradeReq struct {
+	TargetVersion string
+}
+
+type ConfirmAgentUpgradeRes struct {
+}

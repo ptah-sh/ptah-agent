@@ -11,8 +11,11 @@ import (
 )
 
 type taskExecutor struct {
-	docker *dockerClient.Client
-	caddy  *caddyClient.Client
+	agent         *Agent
+	docker        *dockerClient.Client
+	caddy         *caddyClient.Client
+	rootDir       string
+	stopAgentFlag bool
 }
 
 func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (interface{}, error) {
@@ -35,7 +38,17 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.updateCurrentNode(ctx, task.(*t.UpdateCurrentNodeReq))
 	case *t.DeleteServiceReq:
 		return e.deleteDockerService(ctx, task.(*t.DeleteServiceReq))
+	case *t.DownloadAgentUpgradeReq:
+		return e.downloadAgentUpgrade(ctx, task.(*t.DownloadAgentUpgradeReq))
+	case *t.UpdateAgentSymlinkReq:
+		return e.updateAgentSymlink(ctx, task.(*t.UpdateAgentSymlinkReq))
+	case *t.ConfirmAgentUpgradeReq:
+		return e.confirmAgentUpgrade(ctx, task.(*t.ConfirmAgentUpgradeReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}
+}
+
+func (e *taskExecutor) stop() {
+	e.stopAgentFlag = true
 }
