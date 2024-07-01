@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/ptah-sh/ptah-agent/compare/v0.2.0...v0.3.0) (2024-07-01)
+
+
+### Features
+
+* [#5](https://github.com/ptah-sh/ptah-agent/issues/5) support self-upgrade command ([dda2a8b](https://github.com/ptah-sh/ptah-agent/commit/dda2a8b1995290c4e2a6536426c5ac92b4d63cdf))
+
 ## [0.2.0](https://github.com/ptah-sh/ptah-agent/compare/v0.1.0...v0.2.0) (2024-06-29)
 
 
