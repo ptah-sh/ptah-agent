@@ -44,6 +44,12 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.updateAgentSymlink(ctx, task.(*t.UpdateAgentSymlinkReq))
 	case *t.ConfirmAgentUpgradeReq:
 		return e.confirmAgentUpgrade(ctx, task.(*t.ConfirmAgentUpgradeReq))
+	case *t.CreateRegistryAuthReq:
+		return e.createRegistryAuth(ctx, task.(*t.CreateRegistryAuthReq))
+	case *t.CheckRegistryAuthReq:
+		return e.checkRegistryAuth(ctx, task.(*t.CheckRegistryAuthReq))
+	case *t.PullImageReq:
+		return e.pullImage(ctx, task.(*t.PullImageReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}

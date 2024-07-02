@@ -1,6 +1,8 @@
 package ptah_client
 
 import (
+	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
 )
 import "github.com/docker/docker/api/types/network"
@@ -128,4 +130,32 @@ type ConfirmAgentUpgradeReq struct {
 }
 
 type ConfirmAgentUpgradeRes struct {
+}
+
+type CreateRegistryAuthReq struct {
+	PrevConfigName  string
+	AuthConfigSpec  registry.AuthConfig
+	SwarmConfigSpec swarm.ConfigSpec
+}
+
+type CreateRegistryAuthRes struct {
+	dockerIdRes
+}
+
+type CheckRegistryAuthReq struct {
+	RegistryConfigName string
+}
+
+type CheckRegistryAuthRes struct {
+	Status string
+}
+
+type PullImageReq struct {
+	AuthConfigName  string
+	Image           string
+	PullOptionsSpec image.PullOptions
+}
+
+type PullImageRes struct {
+	Output []string `json:"output"`
 }
