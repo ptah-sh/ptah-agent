@@ -36,12 +36,15 @@ func (e *taskExecutor) createRegistryAuth(ctx context.Context, req *t.CreateRegi
 
 	req.SwarmConfigSpec.Data = data
 
-	_, err = e.docker.ConfigCreate(ctx, req.SwarmConfigSpec)
+	config, err := e.docker.ConfigCreate(ctx, req.SwarmConfigSpec)
 	if err != nil {
 		return nil, err
 	}
 
-	return &t.CreateRegistryAuthRes{}, nil
+	res := t.CreateRegistryAuthRes{}
+	res.Docker.ID = config.ID
+
+	return &res, nil
 }
 
 func (e *taskExecutor) checkRegistryAuth(ctx context.Context, req *t.CheckRegistryAuthReq) (*t.CheckRegistryAuthRes, error) {

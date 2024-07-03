@@ -168,7 +168,7 @@ if [ -z "$(which systemctl)" ]; then
     echo ""
     echo "Please add the following command to your init system manually:"
     echo ""
-    echo "    /home/$USER/ptah-agent/current/ptah-agent".
+    echo "    /home/$USER/ptah-agent/current".
     echo ""
     echo "Installation completed."
 
