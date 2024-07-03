@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/ptah-sh/ptah-agent/compare/v0.3.0...v0.4.0) (2024-07-02)
+
+
+### Features
+
+* [#13](https://github.com/ptah-sh/ptah-agent/issues/13) support deployments from the private registreis ([f0b6b19](https://github.com/ptah-sh/ptah-agent/commit/f0b6b1988579a2217c574b594df79317110556f6))
+
 ## [0.3.0](https://github.com/ptah-sh/ptah-agent/compare/v0.2.0...v0.3.0) (2024-07-01)
 
 
