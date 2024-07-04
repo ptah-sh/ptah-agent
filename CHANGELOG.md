@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/ptah-sh/ptah-agent/compare/v0.4.0...v0.5.0) (2024-07-04)
+
+
+### Features
+
+* [#17](https://github.com/ptah-sh/ptah-agent/issues/17) add support for the release command ([6f1f083](https://github.com/ptah-sh/ptah-agent/commit/6f1f08344b21680107546fda827c1422b512bf13))
+
+
+### Bug Fixes
+
+* [#15](https://github.com/ptah-sh/ptah-agent/issues/15) provide docker id to CreateRegistryAuthRes ([7a9b6fe](https://github.com/ptah-sh/ptah-agent/commit/7a9b6fe6c7c3dfd5ae5bfed775d5d18d895d3dad))
+
 ## [0.4.0](https://github.com/ptah-sh/ptah-agent/compare/v0.3.0...v0.4.0) (2024-07-02)
 
 
