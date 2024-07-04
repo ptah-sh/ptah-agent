@@ -55,7 +55,12 @@ type CreateSecretRes struct {
 }
 
 type ServicePayload struct {
-	AuthConfigName   string
+	AuthConfigName string
+	ReleaseCommand struct {
+		ConfigName   string
+		ConfigLabels map[string]string
+		Command      string
+	}
 	SwarmServiceSpec swarm.ServiceSpec
 }
 

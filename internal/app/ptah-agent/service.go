@@ -9,12 +9,13 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/pkg/errors"
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
+	"strings"
 )
 
 func (e *taskExecutor) createDockerService(ctx context.Context, req *t.CreateServiceReq) (*t.CreateServiceRes, error) {
 	var res t.CreateServiceRes
 
-	spec, err := e.prepareServicePayload(ctx, req.SwarmServiceSpec, req.SecretVars)
+	spec, err := e.prepareServicePayload(ctx, req.ServicePayload, req.SecretVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "create docker service")
 	}
@@ -32,7 +33,7 @@ func (e *taskExecutor) createDockerService(ctx context.Context, req *t.CreateSer
 func (e *taskExecutor) updateDockerService(ctx context.Context, req *t.UpdateServiceReq) (*t.UpdateServiceRes, error) {
 	var res t.UpdateServiceRes
 
-	spec, err := e.prepareServicePayload(ctx, req.SwarmServiceSpec, req.SecretVars)
+	spec, err := e.prepareServicePayload(ctx, req.ServicePayload, req.SecretVars)
 	if err != nil {
 		return nil, errors.Wrapf(err, "update docker service")
 	}
@@ -65,7 +66,9 @@ func (e *taskExecutor) updateDockerService(ctx context.Context, req *t.UpdateSer
 	return &res, nil
 }
 
-func (e *taskExecutor) prepareServicePayload(ctx context.Context, spec swarm.ServiceSpec, secretVars t.SecretVars) (*swarm.ServiceSpec, error) {
+func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload t.ServicePayload, secretVars t.SecretVars) (*swarm.ServiceSpec, error) {
+	spec := servicePayload.SwarmServiceSpec
+
 	if secretVars.ConfigName != "" {
 		newVars := make(map[string]string)
 
@@ -121,6 +124,58 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, spec swarm.Ser
 		}
 
 		config.ConfigID = cfg.ID
+	}
+
+	if servicePayload.ReleaseCommand.Command != "" {
+		image, _, err := e.docker.ImageInspectWithRaw(ctx, spec.TaskTemplate.ContainerSpec.Image)
+		if err != nil {
+			return nil, errors.Wrapf(err, "get image %s", spec.TaskTemplate.ContainerSpec.Image)
+		}
+
+		entrypoint := strings.Join(image.Config.Entrypoint, " ")
+		command := strings.Join(image.Config.Cmd, " ")
+
+		originalEntrypoint := entrypoint + " " + command
+
+		script := []string{
+			"#!/bin/sh",
+			"set -e",
+			"echo 'Starting release command'",
+			servicePayload.ReleaseCommand.Command,
+			"echo 'Release command finished'",
+			"echo 'Starting original entrypoint'",
+			originalEntrypoint,
+		}
+
+		config := swarm.ConfigSpec{
+			Annotations: swarm.Annotations{
+				Name:   servicePayload.ReleaseCommand.ConfigName,
+				Labels: servicePayload.ReleaseCommand.ConfigLabels,
+			},
+			Data: []byte(strings.Join(script, "\n")),
+		}
+
+		config.Labels["kind"] = "entrypoint"
+
+		resp, err := e.docker.ConfigCreate(ctx, config)
+		if err != nil {
+			return nil, errors.Wrapf(err, "create config %s", servicePayload.ReleaseCommand.ConfigName)
+		}
+
+		spec.TaskTemplate.ContainerSpec.Configs = append(spec.TaskTemplate.ContainerSpec.Configs, &swarm.ConfigReference{
+			File: &swarm.ConfigReferenceFileTarget{
+				Name: "/ptah/entrypoint.sh",
+				UID:  "0",
+				GID:  "0",
+				Mode: 0644,
+			},
+			ConfigID:   resp.ID,
+			ConfigName: servicePayload.ReleaseCommand.ConfigName,
+		})
+
+		spec.TaskTemplate.ContainerSpec.Command = []string{
+			"sh", "/ptah/entrypoint.sh",
+		}
 	}
 
 	for _, secret := range spec.TaskTemplate.ContainerSpec.Secrets {
