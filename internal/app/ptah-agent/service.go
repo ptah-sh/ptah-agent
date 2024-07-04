@@ -38,25 +38,10 @@ func (e *taskExecutor) updateDockerService(ctx context.Context, req *t.UpdateSer
 		return nil, errors.Wrapf(err, "update docker service")
 	}
 
-	services, err := e.docker.ServiceList(ctx, types.ServiceListOptions{
-		Filters: filters.NewArgs(
-			filters.Arg("name", req.SwarmServiceSpec.Name),
-		),
-	})
-
+	service, err := e.getServiceByName(ctx, req.SwarmServiceSpec.Name)
 	if err != nil {
-		return nil, errors.Wrapf(err, "update docker service")
+		return nil, err
 	}
-
-	if len(services) > 1 {
-		return nil, fmt.Errorf("multiple services with name %s found", req.SwarmServiceSpec.Name)
-	}
-
-	if len(services) == 0 {
-		return nil, fmt.Errorf("service with name %s not found", req.SwarmServiceSpec.Name)
-	}
-
-	service := services[0]
 
 	_, err = e.docker.ServiceUpdate(ctx, service.ID, service.Version, *spec, types.ServiceUpdateOptions{})
 	if err != nil {
@@ -179,25 +164,12 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload
 	}
 
 	for _, secret := range spec.TaskTemplate.ContainerSpec.Secrets {
-		secrets, err := e.docker.SecretList(ctx, types.SecretListOptions{
-			Filters: filters.NewArgs(
-				filters.Arg("name", secret.SecretName),
-			),
-		})
-
+		foundSecret, err := e.getSecretByName(ctx, secret.SecretName)
 		if err != nil {
 			return nil, errors.Wrapf(err, "get secret by name %s", secret.SecretName)
 		}
 
-		if len(secrets) > 1 {
-			return nil, fmt.Errorf("multiple secrets with name %s found", secret.SecretName)
-		}
-
-		if len(secrets) == 0 {
-			return nil, fmt.Errorf("secret with name %s not found", secret.SecretName)
-		}
-
-		secret.SecretID = secrets[0].ID
+		secret.SecretID = foundSecret.ID
 	}
 
 	return &spec, nil
@@ -206,26 +178,39 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload
 func (e *taskExecutor) deleteDockerService(ctx context.Context, req *t.DeleteServiceReq) (*t.DeleteServiceRes, error) {
 	var res t.DeleteServiceRes
 
-	services, err := e.docker.ServiceList(ctx, types.ServiceListOptions{
-		Filters: filters.NewArgs(
-			filters.Arg("name", req.ServiceName),
-		),
-	})
-
+	service, err := e.getServiceByName(ctx, req.ServiceName)
 	if err != nil {
-		return nil, errors.Wrapf(err, "delete docker service")
+		return nil, err
 	}
 
-	if len(services) == 0 {
-		// TODO: return warnings if the service has not been found
-		//return nil, fmt.Errorf("service with name %s not found", req.ServiceName)
-		return nil, nil
-	}
-
-	err = e.docker.ServiceRemove(ctx, services[0].ID)
+	err = e.docker.ServiceRemove(ctx, service.ID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "delete docker service")
 	}
 
 	return &res, nil
+}
+
+func (e *taskExecutor) getServiceByName(ctx context.Context, name string) (*swarm.Service, error) {
+	if name == "" {
+		return nil, errors.Wrapf(ErrServiceNotFound, "service name is empty")
+	}
+
+	services, err := e.docker.ServiceList(ctx, types.ServiceListOptions{
+		Filters: filters.NewArgs(
+			filters.Arg("name", name),
+		),
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, service := range services {
+		if service.Spec.Name == name {
+			return &service, nil
+		}
+	}
+
+	return nil, errors.Wrapf(ErrServiceNotFound, "service with name %s not found", name)
 }

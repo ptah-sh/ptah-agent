@@ -11,7 +11,9 @@ import (
 )
 
 var (
-	ErrConfigNotFound = fmt.Errorf("config not found")
+	ErrConfigNotFound  = fmt.Errorf("config not found")
+	ErrServiceNotFound = fmt.Errorf("service not found")
+	ErrSecretNotFound  = fmt.Errorf("secret not found")
 )
 
 func (e *taskExecutor) createDockerConfig(ctx context.Context, req *t.CreateConfigReq) (*t.CreateConfigRes, error) {
@@ -42,13 +44,11 @@ func (e *taskExecutor) getConfigByName(ctx context.Context, name string) (*swarm
 		return nil, err
 	}
 
-	if len(configs) > 1 {
-		return nil, fmt.Errorf("multiple configs with name %s found", name)
+	for _, config := range configs {
+		if config.Spec.Name == name {
+			return &config, nil
+		}
 	}
 
-	if len(configs) == 0 {
-		return nil, errors.Wrapf(ErrConfigNotFound, "config with name %s not found", name)
-	}
-
-	return &configs[0], nil
+	return nil, errors.Wrapf(ErrConfigNotFound, "config with name %s not found", name)
 }
