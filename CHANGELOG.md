@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/ptah-sh/ptah-agent/compare/v0.5.0...v0.5.1) (2024-07-04)
+
+
+### Bug Fixes
+
+* [#18](https://github.com/ptah-sh/ptah-agent/issues/18) match items by full name ([1aa7686](https://github.com/ptah-sh/ptah-agent/commit/1aa76865583d0eb5a167650fcad313ce8b35457f))
+
 ## [0.5.0](https://github.com/ptah-sh/ptah-agent/compare/v0.4.0...v0.5.0) (2024-07-04)
 
 
