@@ -39,6 +39,10 @@ func parseTask(taskType int, payload string) (interface{}, error) {
 		return unmarshalTask(payload, &ptahClient.CheckRegistryAuthReq{})
 	case 14:
 		return unmarshalTask(payload, &ptahClient.PullImageReq{})
+	case 15:
+		return unmarshalTask(payload, &ptahClient.CreateS3StorageReq{})
+	case 16:
+		return unmarshalTask(payload, &ptahClient.CheckS3StorageReq{})
 	default:
 		return nil, fmt.Errorf("parse task: unknown task type %d", taskType)
 	}

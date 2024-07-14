@@ -83,7 +83,7 @@ if [ -z "$PTAH_TOKEN" ]; then
 fi
 
 PTAH_TOKEN="${PTAH_TOKEN:-$PTAH_TOKEN}"
-PTAH_BASE_URL="${PTAH_BASE_URL:-"https://app.ptah.sh"}"
+PTAH_BASE_URL="${PTAH_BASE_URL:-"https://ctl.ptah.sh"}"
 
 echo "User: $USER:$GROUP"
 
@@ -207,4 +207,4 @@ systemctl daemon-reload
 systemctl enable ptah-agent
 systemctl start ptah-agent
 
-echo "Installation completed. Please check status on https://app.ptah.sh."
+echo "Installation completed. Please check status on https://ctl.ptah.sh."

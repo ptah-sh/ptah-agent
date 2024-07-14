@@ -50,6 +50,10 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.checkRegistryAuth(ctx, task.(*t.CheckRegistryAuthReq))
 	case *t.PullImageReq:
 		return e.pullImage(ctx, task.(*t.PullImageReq))
+	case *t.CreateS3StorageReq:
+		return e.createS3Storage(ctx, task.(*t.CreateS3StorageReq))
+	case *t.CheckS3StorageReq:
+		return e.checkS3Storage(ctx, task.(*t.CheckS3StorageReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}

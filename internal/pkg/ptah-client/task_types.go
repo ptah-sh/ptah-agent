@@ -164,3 +164,29 @@ type PullImageReq struct {
 type PullImageRes struct {
 	Output []string `json:"output"`
 }
+
+type S3StorageSpec struct {
+	Endpoint   string
+	AccessKey  string
+	SecretKey  string
+	Region     string
+	Bucket     string
+	PathPrefix string
+}
+
+type CreateS3StorageReq struct {
+	PrevConfigName  string
+	S3StorageSpec   S3StorageSpec
+	SwarmConfigSpec swarm.ConfigSpec
+}
+
+type CreateS3StorageRes struct {
+	dockerIdRes
+}
+
+type CheckS3StorageReq struct {
+	S3StorageConfigName string
+}
+
+type CheckS3StorageRes struct {
+}

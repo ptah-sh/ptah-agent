@@ -15,9 +15,9 @@ var version string = "dev"
 func main() {
 	baseUrl := os.Getenv("PTAH_BASE_URL")
 	if baseUrl == "" {
-		log.Println("PTAH_BASE_URL is not set, using https://app.ptah.sh")
+		log.Println("PTAH_BASE_URL is not set, using https://ctl.ptah.sh")
 
-		baseUrl = "https://app.ptah.sh"
+		baseUrl = "https://ctl.ptah.sh"
 	}
 
 	baseUrl = strings.Trim(baseUrl, "/")
