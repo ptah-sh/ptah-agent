@@ -54,6 +54,10 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.createS3Storage(ctx, task.(*t.CreateS3StorageReq))
 	case *t.CheckS3StorageReq:
 		return e.checkS3Storage(ctx, task.(*t.CheckS3StorageReq))
+	case *t.ServiceExecReq:
+		return e.exec(ctx, task.(*t.ServiceExecReq))
+	case *t.S3UploadReq:
+		return e.s3upload(ctx, task.(*t.S3UploadReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}

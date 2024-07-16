@@ -1,7 +1,9 @@
 package ptah_client
 
 import (
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
 )
@@ -189,4 +191,23 @@ type CheckS3StorageReq struct {
 }
 
 type CheckS3StorageRes struct {
+}
+
+type ServiceExecReq struct {
+	ProcessName string
+	ExecSpec    container.ExecOptions
+}
+
+type ServiceExecRes struct {
+	Output []string `json:"output"`
+}
+
+type S3UploadReq struct {
+	S3StorageConfigName string
+	VolumeSpec          mount.Mount
+	SrcFilePath         string
+	DestFilePath        string
+}
+
+type S3UploadRes struct {
 }
