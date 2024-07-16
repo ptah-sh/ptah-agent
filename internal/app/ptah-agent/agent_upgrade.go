@@ -45,6 +45,20 @@ func (e *taskExecutor) downloadAgentUpgrade(ctx context.Context, req *t.Download
 
 	defer file.Close()
 
+	fileStat, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	currentPerms := fileStat.Mode()
+	// chmod +x
+	newPerms := currentPerms | 0111
+
+	err = file.Chmod(newPerms)
+	if err != nil {
+		return nil, err
+	}
+
 	written, err := io.Copy(file, resp.Body)
 	if err != nil {
 		return nil, err
