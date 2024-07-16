@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/ptah-sh/ptah-agent/compare/v0.7.0...v0.8.0) (2024-07-16)
+
+
+### Features
+
+* [#5](https://github.com/ptah-sh/ptah-agent/issues/5) download new release into a subfolder ([a972b80](https://github.com/ptah-sh/ptah-agent/commit/a972b80c3fa6654cb443c6a792e230e80d96ebdd))
+
 ## [0.7.0](https://github.com/ptah-sh/ptah-agent/compare/v0.6.0...v0.7.0) (2024-07-16)
 
 
