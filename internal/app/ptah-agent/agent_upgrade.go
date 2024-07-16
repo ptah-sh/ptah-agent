@@ -38,7 +38,12 @@ func (e *taskExecutor) downloadAgentUpgrade(ctx context.Context, req *t.Download
 		return nil, fmt.Errorf("download agent upgrade: unexpected content type %s", resp.Header.Get("Content-Type"))
 	}
 
-	file, err := os.Create(path.Join(e.rootDir, "versions", req.TargetVersion))
+	err = os.Mkdir(path.Join(e.rootDir, "versions", req.TargetVersion), 0755)
+	if err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+
+	file, err := os.Create(path.Join(e.rootDir, "versions", req.TargetVersion, "ptah-agent"))
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +82,7 @@ func (e *taskExecutor) updateAgentSymlink(ctx context.Context, req *t.UpdateAgen
 		return nil, err
 	}
 
-	err = os.Symlink(path.Join(e.rootDir, "versions", req.TargetVersion), current)
+	err = os.Symlink(path.Join(e.rootDir, "versions", req.TargetVersion, "ptah-agent"), current)
 	if err != nil {
 		return nil, err
 	}
