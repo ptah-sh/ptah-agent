@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/ptah-sh/ptah-agent/compare/v0.9.0...v0.10.0) (2024-07-16)
+
+
+### Features
+
+* [#5](https://github.com/ptah-sh/ptah-agent/issues/5) test empty commit 2 ([61e6a11](https://github.com/ptah-sh/ptah-agent/commit/61e6a1122fb091339aa838975b13b661eb74cdaf))
+
 ## [0.9.0](https://github.com/ptah-sh/ptah-agent/compare/v0.8.0...v0.9.0) (2024-07-16)
 
 
