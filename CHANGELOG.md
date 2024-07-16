@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/ptah-sh/ptah-agent/compare/v0.6.0...v0.7.0) (2024-07-16)
+
+
+### Features
+
+* [#5](https://github.com/ptah-sh/ptah-agent/issues/5) try set executable flag ([bdcc887](https://github.com/ptah-sh/ptah-agent/commit/bdcc887c58e89b2dee5b1726a5add577f530e0ed))
+
 ## [0.6.0](https://github.com/ptah-sh/ptah-agent/compare/v0.5.1...v0.6.0) (2024-07-16)
 
 
