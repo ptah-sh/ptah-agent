@@ -211,3 +211,10 @@ type S3UploadReq struct {
 
 type S3UploadRes struct {
 }
+
+type JoinSwarmReq struct {
+	JoinSpec swarm.JoinRequest
+}
+
+type JoinSwarmRes struct {
+}

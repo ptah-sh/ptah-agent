@@ -58,6 +58,8 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.exec(ctx, task.(*t.ServiceExecReq))
 	case *t.S3UploadReq:
 		return e.s3upload(ctx, task.(*t.S3UploadReq))
+	case *t.JoinSwarmReq:
+		return e.joinSwarm(ctx, task.(*t.JoinSwarmReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}

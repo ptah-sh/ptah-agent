@@ -1,8 +1,25 @@
 package ptah_client
 
-import "github.com/ptah-sh/ptah-agent/internal/pkg/networks"
+import (
+	"github.com/ptah-sh/ptah-agent/internal/pkg/networks"
+)
 
-type StartedReq struct {
+type JoinTokens struct {
+	Worker  string `json:"worker"`
+	Manager string `json:"manager"`
+}
+
+type ManagerNode struct {
+	NodeID string `json:"nodeId"`
+	Addr   string `json:"addr"`
+}
+
+type SwarmData struct {
+	JoinTokens   JoinTokens    `json:"joinTokens"`
+	ManagerNodes []ManagerNode `json:"managerNodes"`
+}
+
+type NodeData struct {
 	Version string `json:"version"`
 	Docker  struct {
 		Platform struct {
@@ -12,6 +29,12 @@ type StartedReq struct {
 	Host struct {
 		Networks []networks.Network `json:"networks"`
 	} `json:"host"`
+	Role string `json:"role"`
+}
+
+type StartedReq struct {
+	NodeData  NodeData   `json:"node"`
+	SwarmData *SwarmData `json:"swarm"`
 }
 
 type StartedRes struct {

@@ -2,10 +2,11 @@ package ptah_agent
 
 import (
 	"context"
-	"github.com/pkg/errors"
-	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 	"log"
 	"runtime"
+
+	"github.com/pkg/errors"
+	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
 func (e *taskExecutor) initSwarm(ctx context.Context, req *t.InitSwarmReq) (*t.InitSwarmRes, error) {
@@ -23,6 +24,17 @@ func (e *taskExecutor) initSwarm(ctx context.Context, req *t.InitSwarmReq) (*t.I
 	}
 
 	res.Docker.ID = swarmId
+
+	return &res, nil
+}
+
+func (e *taskExecutor) joinSwarm(ctx context.Context, req *t.JoinSwarmReq) (*t.JoinSwarmRes, error) {
+	var res t.JoinSwarmRes
+
+	err := e.docker.SwarmJoin(ctx, req.JoinSpec)
+	if err != nil {
+		return nil, errors.Wrapf(err, "join swarm")
+	}
 
 	return &res, nil
 }

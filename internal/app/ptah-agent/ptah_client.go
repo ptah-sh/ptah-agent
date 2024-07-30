@@ -2,14 +2,15 @@ package ptah_agent
 
 import (
 	"context"
+	"log"
+	"net/http"
+	"time"
+
 	dockerClient "github.com/docker/docker/client"
 	"github.com/pkg/errors"
 	caddyClient "github.com/ptah-sh/ptah-agent/internal/pkg/caddy-client"
 	"github.com/ptah-sh/ptah-agent/internal/pkg/networks"
 	ptahClient "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
-	"log"
-	"net/http"
-	"time"
 )
 
 type Agent struct {
@@ -49,12 +50,45 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 		return nil, err
 	}
 
-	startedReq := ptahClient.StartedReq{
+	nodeData := ptahClient.NodeData{
 		Version: a.Version,
 	}
 
-	startedReq.Docker.Platform.Name = info.Name
-	startedReq.Host.Networks = nets
+	nodeData.Docker.Platform.Name = info.Name
+	nodeData.Host.Networks = nets
+	if info.Swarm.ControlAvailable {
+		nodeData.Role = "manager"
+	} else {
+		nodeData.Role = "worker"
+	}
+
+	startedReq := ptahClient.StartedReq{
+		NodeData:  nodeData,
+		SwarmData: nil,
+	}
+
+	if info.Swarm.NodeID != "" {
+		swarm, err := a.docker.SwarmInspect(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		managerNodes := make([]ptahClient.ManagerNode, 0, len(info.Swarm.RemoteManagers))
+		for _, manager := range info.Swarm.RemoteManagers {
+			managerNodes = append(managerNodes, ptahClient.ManagerNode{
+				NodeID: manager.NodeID,
+				Addr:   manager.Addr,
+			})
+		}
+
+		startedReq.SwarmData = &ptahClient.SwarmData{
+			JoinTokens: ptahClient.JoinTokens{
+				Worker:  swarm.JoinTokens.Worker,
+				Manager: swarm.JoinTokens.Manager,
+			},
+			ManagerNodes: managerNodes,
+		}
+	}
 
 	log.Println("sending started event, base url", a.ptah.BaseUrl)
 	settings, err := a.ptah.Started(ctx, startedReq)
