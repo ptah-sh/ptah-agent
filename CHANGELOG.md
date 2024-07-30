@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.0](https://github.com/ptah-sh/ptah-agent/compare/v0.10.0...v0.11.0) (2024-07-30)
+
+
+### Features
+
+* [#27](https://github.com/ptah-sh/ptah-agent/issues/27) handle joinswarm command ([3680760](https://github.com/ptah-sh/ptah-agent/commit/3680760d72d44a45c77258c939d225ff66503773))
+
 ## [0.10.0](https://github.com/ptah-sh/ptah-agent/compare/v0.9.0...v0.10.0) (2024-07-16)
 
 
