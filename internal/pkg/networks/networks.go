@@ -2,6 +2,7 @@ package networks
 
 import (
 	"net"
+	"strings"
 )
 
 type IP struct {
@@ -26,7 +27,8 @@ func List() ([]Network, error) {
 		isLoopback := i.Flags&net.FlagLoopback == net.FlagLoopback
 		isDown := i.Flags&net.FlagUp == 0
 		isNotBroadcast := i.Flags&net.FlagBroadcast == 0
-		if isLoopback || isDown || isNotBroadcast {
+		isDockerNetwork := strings.Contains(i.Name, "docker")
+		if isLoopback || isDown || isNotBroadcast || isDockerNetwork {
 			continue
 		}
 
