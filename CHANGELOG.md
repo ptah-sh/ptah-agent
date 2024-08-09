@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/ptah-sh/ptah-agent/compare/v0.11.0...v0.11.1) (2024-08-09)
+
+
+### Bug Fixes
+
+* [#29](https://github.com/ptah-sh/ptah-agent/issues/29) mark failed to parse tasks as failed ([1c6bde9](https://github.com/ptah-sh/ptah-agent/commit/1c6bde96abf6c7d0263999d034eac1dc02e56f76))
+
 ## [0.11.0](https://github.com/ptah-sh/ptah-agent/compare/v0.10.0...v0.11.0) (2024-07-30)
 
 
