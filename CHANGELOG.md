@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/ptah-sh/ptah-agent/compare/v0.11.1...v0.12.0) (2024-08-09)
+
+
+### Features
+
+* [#31](https://github.com/ptah-sh/ptah-agent/issues/31) ignore docker network interfaces ([cbe7a08](https://github.com/ptah-sh/ptah-agent/commit/cbe7a08524ce5ab666d6f870960658a1d6a52674))
+
 ## [0.11.1](https://github.com/ptah-sh/ptah-agent/compare/v0.11.0...v0.11.1) (2024-08-09)
 
 
