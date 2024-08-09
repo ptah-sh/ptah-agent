@@ -120,6 +120,14 @@ func (a *Agent) Start(ctx context.Context) error {
 		taskID, task, err := a.getNextTask(ctx)
 		if err != nil {
 			log.Println("can't get the next task", err)
+
+			if taskID != 0 {
+				if err = a.ptah.FailTask(ctx, taskID, &ptahClient.TaskError{
+					Message: err.Error(),
+				}); err != nil {
+					log.Println("can't fail task", err)
+				}
+			}
 		}
 
 		if task == nil {
@@ -164,7 +172,7 @@ func (a *Agent) getNextTask(ctx context.Context) (taskId int, task interface{}, 
 
 	task, err = parseTask(nextTaskRes.TaskType, nextTaskRes.Payload)
 	if err != nil {
-		return 0, nil, errors.Wrapf(err, "agent.getNextTask: parse task %d failed", nextTaskRes.TaskType)
+		return nextTaskRes.ID, nil, errors.Wrapf(err, "agent.getNextTask: parse task %d failed", nextTaskRes.TaskType)
 	}
 
 	return nextTaskRes.ID, task, nil
