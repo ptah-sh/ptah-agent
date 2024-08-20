@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/ptah-sh/ptah-agent/compare/v0.12.0...v0.12.1) (2024-08-20)
+
+
+### Bug Fixes
+
+* [#34](https://github.com/ptah-sh/ptah-agent/issues/34) pull d3fk/s3cmd image before starting a container ([d841653](https://github.com/ptah-sh/ptah-agent/commit/d8416530b1f4203851a6b7fd70664ca8a4aeaecf))
+
 ## [0.12.0](https://github.com/ptah-sh/ptah-agent/compare/v0.11.1...v0.12.0) (2024-08-09)
 
 
