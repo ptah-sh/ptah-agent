@@ -4,16 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"strings"
+	"time"
+
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	dockerClient "github.com/docker/docker/client"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
-	"io"
-	"log"
-	"strings"
-	"time"
 )
 
 func (e *taskExecutor) createS3Storage(ctx context.Context, req *t.CreateS3StorageReq) (*t.CreateS3StorageRes, error) {
@@ -98,6 +100,12 @@ func (e *taskExecutor) uploadS3FileWithHelper(ctx context.Context, mounts []moun
 
 	if strings.Index(destFilePath, s3StorageSpec.PathPrefix) == 0 {
 		destFilePath = destFilePath[len(s3StorageSpec.PathPrefix):]
+	}
+
+	// Pull the d3fk/s3cmd image before starting the container
+	_, err = e.docker.ImagePull(ctx, "d3fk/s3cmd", image.PullOptions{}) // Added underscore to ignore the first return value
+	if err != nil {
+		return fmt.Errorf("check s3 storage: pull image: %w", err)
 	}
 
 	createResponse, err := e.docker.ContainerCreate(ctx, &container.Config{
