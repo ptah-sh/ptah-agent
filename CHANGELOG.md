@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.0](https://github.com/ptah-sh/ptah-agent/compare/v0.13.0...v0.14.0) (2024-08-25)
+
+
+### Features
+
+* [#37](https://github.com/ptah-sh/ptah-agent/issues/37) better address field name ([28763b4](https://github.com/ptah-sh/ptah-agent/commit/28763b4a737de492994a2395dfb554ba3020082a))
+
 ## [0.13.0](https://github.com/ptah-sh/ptah-agent/compare/v0.12.1...v0.13.0) (2024-08-25)
 
 
