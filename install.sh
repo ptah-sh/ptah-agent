@@ -164,18 +164,18 @@ echo "Installing docker-ingress-routing-daemon (DIRD)..."
 echo "  See https://github.com/moby/moby/issues/25526 why the DIRD is needed."
 echo "  See https://github.com/newsnowlabs/docker-ingress-routing-daemon for technical details."
 
-mkdir -p \$HOME/dird
+mkdir -p $HOME/dird
 
-curl -L https://raw.githubusercontent.com/newsnowlabs/docker-ingress-routing-daemon/b7f58dbac0038f0a925938e639c95a75392c9208/docker-ingress-routing-daemon -o \$HOME/dird/docker-ingress-routing-daemon
+curl -L https://raw.githubusercontent.com/newsnowlabs/docker-ingress-routing-daemon/b7f58dbac0038f0a925938e639c95a75392c9208/docker-ingress-routing-daemon -o $HOME/dird/docker-ingress-routing-daemon
 
-chmod +x \$HOME/dird/docker-ingress-routing-daemon
+chmod +x $HOME/dird/docker-ingress-routing-daemon
 
-echo '--tcp-ports 80,443 --ingress-gateway-ips 10.0.0.2' > \$HOME/dird/params.conf
+echo '--tcp-ports 80,443 --ingress-gateway-ips 10.0.0.2' > $HOME/dird/params.conf
 
-echo '#!/usr/bin/env bash' > \$HOME/dird/start.sh
-echo '\$HOME/dird/docker-ingress-routing-daemon --install --preexisting --iptables-wait $(cat \$HOME/dird/params.conf)' >> \$HOME/dird/start.sh
+echo '#!/usr/bin/env bash' > $HOME/dird/start.sh
+echo '$HOME/dird/docker-ingress-routing-daemon --install --preexisting --iptables-wait $(cat $HOME/dird/params.conf)' >> $HOME/dird/start.sh
 
-chmod +x \$HOME/dird/start.sh
+chmod +x $HOME/dird/start.sh
 
 EOF
 
@@ -231,8 +231,31 @@ StartLimitIntervalSec=0
 ExecStart=\$HOME/dird/start.sh
 Restart=always
 
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat <<EOF > /etc/systemd/system/dird-restart.service
+[Unit]
+Description=Dird Service Restart
+After=dird.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/systemctl restart dird
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat <<EOF > /etc/systemd/system/dird.path
+[Unit]
+Description=Dird Service Params File
+After=sysinit.target dockerd.service
+
 [Path]
-PathModified=\$HOME/dird/params.conf
+PathModified=/home/ptah/dird/params.conf
+Unit=dird-restart.service
 
 [Install]
 WantedBy=multi-user.target
@@ -248,5 +271,11 @@ systemctl start ptah-agent
 
 systemctl enable dird
 systemctl start dird
+
+systemctl enable dird-restart
+systemctl start dird-restart
+
+systemctl enable dird.path
+systemctl start dird.path
 
 echo "Installation completed. Please check status on https://ctl.ptah.sh."
