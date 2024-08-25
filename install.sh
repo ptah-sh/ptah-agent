@@ -254,7 +254,7 @@ Description=Dird Service Params File
 After=sysinit.target dockerd.service
 
 [Path]
-PathModified=/home/ptah/dird/params.conf
+PathModified=\$HOME/dird/params.conf
 Unit=dird-restart.service
 
 [Install]
