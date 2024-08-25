@@ -62,6 +62,8 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 		nodeData.Role = "worker"
 	}
 
+	nodeData.Addr = info.Swarm.NodeAddr
+
 	startedReq := ptahClient.StartedReq{
 		NodeData:  nodeData,
 		SwarmData: nil,

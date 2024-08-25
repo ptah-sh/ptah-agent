@@ -30,6 +30,7 @@ type NodeData struct {
 		Networks []networks.Network `json:"networks"`
 	} `json:"host"`
 	Role string `json:"role"`
+	Addr string `json:"addr"`
 }
 
 type StartedReq struct {
