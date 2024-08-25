@@ -4,10 +4,10 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/swarm"
 )
-import "github.com/docker/docker/api/types/network"
 
 type TaskError struct {
 	Message string `json:"message"`
@@ -217,4 +217,13 @@ type JoinSwarmReq struct {
 }
 
 type JoinSwarmRes struct {
+}
+
+type UpdateDirdReq struct {
+	NodeAddresses  []string
+	DockerServices []string
+	NodePorts      []string
+}
+
+type UpdateDirdRes struct {
 }

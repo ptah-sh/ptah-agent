@@ -160,15 +160,35 @@ chmod +x \$SEED_VERSION/ptah-agent
 
 ln -nsf \$SEED_VERSION/ptah-agent \$HOME/ptah-agent/current
 
+echo "Installing docker-ingress-routing-daemon (DIRD)..."
+echo "  See https://github.com/moby/moby/issues/25526 why the DIRD is needed."
+echo "  See https://github.com/newsnowlabs/docker-ingress-routing-daemon for technical details."
+
+mkdir -p \$HOME/dird
+
+curl -L https://raw.githubusercontent.com/newsnowlabs/docker-ingress-routing-daemon/b7f58dbac0038f0a925938e639c95a75392c9208/docker-ingress-routing-daemon -o \$HOME/dird/docker-ingress-routing-daemon
+
+chmod +x \$HOME/dird/docker-ingress-routing-daemon
+
+echo '--tcp-ports 80,443 --ingress-gateway-ips 10.0.0.2' > \$HOME/dird/params.conf
+
+echo '#!/usr/bin/env bash' > \$HOME/dird/start.sh
+echo '\$HOME/dird/docker-ingress-routing-daemon --install --preexisting --iptables-wait $(cat \$HOME/dird/params.conf)' >> \$HOME/dird/start.sh
+
+chmod +x \$HOME/dird/start.sh
+
 EOF
 
 if [ -z "$(which systemctl)" ]; then
     echo "systemctl was not found."
+    echo ""
     echo "Are you running in Docker?"
     echo ""
-    echo "Please add the following command to your init system manually:"
+    echo "Please add the following commands to your init system manually:"
     echo ""
     echo "    /home/$USER/ptah-agent/current".
+    echo ""
+    echo "    /home/$USER/dird/start.sh".
     echo ""
     echo "Installation completed."
 
@@ -201,10 +221,32 @@ RestartMaxDelaySec=30
 WantedBy=multi-user.target
 EOF
 
+cat <<EOF > /etc/systemd/system/dird.service
+[Unit]
+Description=Dird Service
+After=sysinit.target dockerd.service
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=\$HOME/dird/start.sh
+Restart=always
+
+[Path]
+PathModified=\$HOME/dird/params.conf
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
 echo "Reloading systemd..."
 
 systemctl daemon-reload
+
 systemctl enable ptah-agent
 systemctl start ptah-agent
+
+systemctl enable dird
+systemctl start dird
 
 echo "Installation completed. Please check status on https://ctl.ptah.sh."

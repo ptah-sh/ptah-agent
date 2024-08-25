@@ -3,10 +3,10 @@ package ptah_agent
 import (
 	"context"
 	"fmt"
+
 	dockerClient "github.com/docker/docker/client"
 	caddyClient "github.com/ptah-sh/ptah-agent/internal/pkg/caddy-client"
-)
-import (
+
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
@@ -60,6 +60,8 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.s3upload(ctx, task.(*t.S3UploadReq))
 	case *t.JoinSwarmReq:
 		return e.joinSwarm(ctx, task.(*t.JoinSwarmReq))
+	case *t.UpdateDirdReq:
+		return e.updateDird(ctx, task.(*t.UpdateDirdReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}

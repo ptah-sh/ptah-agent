@@ -3,6 +3,7 @@ package ptah_agent
 import (
 	"encoding/json"
 	"fmt"
+
 	ptahClient "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
@@ -49,6 +50,8 @@ func parseTask(taskType int, payload string) (interface{}, error) {
 		return unmarshalTask(payload, &ptahClient.S3UploadReq{})
 	case 19:
 		return unmarshalTask(payload, &ptahClient.JoinSwarmReq{})
+	case 20:
+		return unmarshalTask(payload, &ptahClient.UpdateDirdReq{})
 	default:
 		return nil, fmt.Errorf("parse task: unknown task type %d", taskType)
 	}
