@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.13.0](https://github.com/ptah-sh/ptah-agent/compare/v0.12.1...v0.13.0) (2024-08-25)
+
+
+### Features
+
+* [#37](https://github.com/ptah-sh/ptah-agent/issues/37) send the current node (internal) addr on startup ([01b68e9](https://github.com/ptah-sh/ptah-agent/commit/01b68e95bb97293cf70cb3d8aa3b44027e6bfd02))
+
+
+### Bug Fixes
+
+* [#34](https://github.com/ptah-sh/ptah-agent/issues/34) close the reader to avoid leaks ([bc29b35](https://github.com/ptah-sh/ptah-agent/commit/bc29b353c9e6635b1522326a6c94898b432f7ffe))
+
 ## [0.12.1](https://github.com/ptah-sh/ptah-agent/compare/v0.12.0...v0.12.1) (2024-08-20)
 
 
