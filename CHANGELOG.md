@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/ptah-sh/ptah-agent/compare/v0.14.0...v0.15.0) (2024-08-25)
+
+
+### Features
+
+* [#39](https://github.com/ptah-sh/ptah-agent/issues/39) support dird (re-) configuration ([90c1772](https://github.com/ptah-sh/ptah-agent/commit/90c177240ea950f97fcc125841b6e721f47c6f97))
+
 ## [0.14.0](https://github.com/ptah-sh/ptah-agent/compare/v0.13.0...v0.14.0) (2024-08-25)
 
 
