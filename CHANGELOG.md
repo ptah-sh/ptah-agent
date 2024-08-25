@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.1](https://github.com/ptah-sh/ptah-agent/compare/v0.15.0...v0.15.1) (2024-08-25)
+
+
+### Bug Fixes
+
+* [#39](https://github.com/ptah-sh/ptah-agent/issues/39) restart dird ([848bd1b](https://github.com/ptah-sh/ptah-agent/commit/848bd1b0de3a3d064a4685e2bc68947d58b2a8c1))
+* [#39](https://github.com/ptah-sh/ptah-agent/issues/39) restart dird ([902bcbe](https://github.com/ptah-sh/ptah-agent/commit/902bcbe610b66d252bc24ea7d1f13f39833c16df))
+
 ## [0.15.0](https://github.com/ptah-sh/ptah-agent/compare/v0.14.0...v0.15.0) (2024-08-25)
 
 
