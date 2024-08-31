@@ -2,17 +2,56 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
-	ptahAgent "github.com/ptah-sh/ptah-agent/internal/app/ptah-agent"
 	"log"
 	"os"
 	"path"
 	"strings"
+
+	ptahAgent "github.com/ptah-sh/ptah-agent/internal/app/ptah-agent"
+	"github.com/ptah-sh/ptah-agent/internal/pkg/networks"
 )
 
 var version string = "dev"
 
 func main() {
+	// Define subcommands
+	listIPsCmd := flag.NewFlagSet("list-ips", flag.ExitOnError)
+
+	// Parse the main command
+	if len(os.Args) == 1 {
+		runAgent()
+
+		return
+	}
+
+	switch os.Args[1] {
+	case "list-ips":
+		listIPsCmd.Parse(os.Args[2:])
+		listIPs()
+	default:
+		log.Fatalf("Unknown command: %s", os.Args[1])
+	}
+}
+
+func listIPs() {
+	networks, err := networks.List()
+	if err != nil {
+		log.Fatalf("Error listing networks: %v", err)
+	}
+
+	var ips []string
+	for _, network := range networks {
+		for _, ip := range network.IPs {
+			ips = append(ips, ip.IP)
+		}
+	}
+
+	fmt.Println(strings.Join(ips, " "))
+}
+
+func runAgent() {
 	baseUrl := os.Getenv("PTAH_BASE_URL")
 	if baseUrl == "" {
 		log.Println("PTAH_BASE_URL is not set, using https://ctl.ptah.sh")
