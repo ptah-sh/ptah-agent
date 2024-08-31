@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.0](https://github.com/ptah-sh/ptah-agent/compare/v0.15.1...v0.16.0) (2024-08-31)
+
+
+### Features
+
+* [#44](https://github.com/ptah-sh/ptah-agent/issues/44) allow to list available ips ([214fa59](https://github.com/ptah-sh/ptah-agent/commit/214fa59dfbd43005f2a593582d950e4e772327c5))
+
 ## [0.15.1](https://github.com/ptah-sh/ptah-agent/compare/v0.15.0...v0.15.1) (2024-08-25)
 
 
