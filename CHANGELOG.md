@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.0](https://github.com/ptah-sh/ptah-agent/compare/v0.16.0...v0.17.0) (2024-09-01)
+
+
+### Features
+
+* [#44](https://github.com/ptah-sh/ptah-agent/issues/44) allow execute tasks from JSON file ([b935b01](https://github.com/ptah-sh/ptah-agent/commit/b935b01cbedd2e3f7b62b58a5572e6bac7313e76))
+
 ## [0.16.0](https://github.com/ptah-sh/ptah-agent/compare/v0.15.1...v0.16.0) (2024-08-31)
 
 
