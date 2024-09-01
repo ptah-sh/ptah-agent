@@ -2,8 +2,11 @@ package ptah_agent
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	dockerClient "github.com/docker/docker/client"
@@ -21,13 +24,23 @@ type Agent struct {
 	caddy   *caddyClient.Client
 }
 
-func New(version string, baseUrl string, ptahToken string, rootDir string) *Agent {
+func New(version string, baseUrl string, ptahToken string, rootDir string) (*Agent, error) {
+	docker, err := dockerClient.NewClientWithOpts(dockerClient.FromEnv)
+	if err != nil {
+		return nil, fmt.Errorf("error initializing Docker client: %w", err)
+	}
+
+	// Create a background context for API version negotiation
+	ctx := context.Background()
+	docker.NegotiateAPIVersion(ctx)
+
 	return &Agent{
 		Version: version,
 		ptah:    ptahClient.New(baseUrl, ptahToken),
 		rootDir: rootDir,
 		caddy:   caddyClient.New("http://127.0.0.1:2019", http.DefaultClient),
-	}
+		docker:  docker,
+	}, nil
 }
 
 func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, error) {
@@ -35,15 +48,6 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 	if err != nil {
 		return nil, nil
 	}
-
-	docker, err := dockerClient.NewClientWithOpts(dockerClient.FromEnv)
-	if err != nil {
-		return nil, err
-	}
-
-	a.docker = docker
-
-	a.docker.NegotiateAPIVersion(ctx)
 
 	info, err := a.docker.Info(ctx)
 	if err != nil {
@@ -178,4 +182,71 @@ func (a *Agent) getNextTask(ctx context.Context) (taskId int, task interface{}, 
 	}
 
 	return nextTaskRes.ID, task, nil
+}
+
+func (a *Agent) ExecTasks(ctx context.Context, jsonFilePath string) error {
+	// Docker client should already be initialized and version negotiated in New()
+	if a.docker == nil {
+		return fmt.Errorf("Docker client not initialized")
+	}
+
+	// Read the JSON file
+	jsonData, err := os.ReadFile(jsonFilePath)
+	if err != nil {
+		return fmt.Errorf("error reading JSON file: %w", err)
+	}
+
+	// Parse the JSON data
+	var taskList []ptahClient.GetNextTaskRes
+	err = json.Unmarshal(jsonData, &taskList)
+	if err != nil {
+		return fmt.Errorf("error parsing JSON data: %w", err)
+	}
+
+	executor := &taskExecutor{
+		docker:  a.docker,
+		caddy:   a.caddy,
+		rootDir: a.rootDir,
+		agent:   a,
+	}
+
+	// Execute each task
+	for _, taskRes := range taskList {
+		task, err := parseTask(taskRes.TaskType, taskRes.Payload)
+		if err != nil {
+			return fmt.Errorf("error parsing task %d: %w", taskRes.ID, err)
+		}
+
+		var result interface{}
+		if taskRes.TaskType == 5 {
+			result, err = a.retryTask(ctx, executor, task, 5*time.Second, 3*time.Minute)
+		} else {
+			result, err = executor.executeTask(ctx, task)
+		}
+
+		if err != nil {
+			return fmt.Errorf("error executing task %d: %w", taskRes.ID, err)
+		}
+
+		log.Printf("Task %d (Type: %d) executed successfully. Result: %+v", taskRes.ID, taskRes.TaskType, result)
+	}
+
+	return nil
+}
+
+func (a *Agent) retryTask(ctx context.Context, executor *taskExecutor, task interface{}, retryInterval time.Duration, maxDuration time.Duration) (interface{}, error) {
+	startTime := time.Now()
+	for {
+		result, err := executor.executeTask(ctx, task)
+		if err == nil {
+			return result, nil
+		}
+
+		if time.Since(startTime) >= maxDuration {
+			return nil, fmt.Errorf("'Apply Caddy Config' task execution failed after %v: %w", maxDuration, err)
+		}
+
+		log.Printf("'Apply Caddy Config' task failed, retrying in %v: %v", retryInterval, err)
+		time.Sleep(retryInterval)
+	}
 }
