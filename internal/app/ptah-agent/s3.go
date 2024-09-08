@@ -103,7 +103,7 @@ func (e *taskExecutor) uploadS3FileWithHelper(ctx context.Context, mounts []moun
 	}
 
 	// Pull the d3fk/s3cmd image before starting the container
-	pull, err := e.docker.ImagePull(ctx, "d3fk/s3cmd", image.PullOptions{}) // Added underscore to ignore the first return value
+	pull, err := e.docker.ImagePull(ctx, "d3fk/s3cmd", image.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("check s3 storage: pull image: %w", err)
 	}
@@ -115,6 +115,7 @@ func (e *taskExecutor) uploadS3FileWithHelper(ctx context.Context, mounts []moun
 	}
 
 	createResponse, err := e.docker.ContainerCreate(ctx, &container.Config{
+		User:  "root",
 		Image: "d3fk/s3cmd",
 		Entrypoint: []string{
 			"sh",
