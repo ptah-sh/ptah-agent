@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.1](https://github.com/ptah-sh/ptah-agent/compare/v0.17.0...v0.17.1) (2024-09-08)
+
+
+### Bug Fixes
+
+* try set user for backups ([d62e305](https://github.com/ptah-sh/ptah-agent/commit/d62e3056b7f45b2a2185318a82c7894a60f49b48))
+
 ## [0.17.0](https://github.com/ptah-sh/ptah-agent/compare/v0.16.0...v0.17.0) (2024-09-01)
 
 
