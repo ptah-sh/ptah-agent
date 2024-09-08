@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.2](https://github.com/ptah-sh/ptah-agent/compare/v0.17.1...v0.17.2) (2024-09-08)
+
+
+### Bug Fixes
+
+* always provide addr ([db08b7b](https://github.com/ptah-sh/ptah-agent/commit/db08b7b13b1b03b35f8fcc6e63b21b5331bbee89))
+
 ## [0.17.1](https://github.com/ptah-sh/ptah-agent/compare/v0.17.0...v0.17.1) (2024-09-08)
 
 
