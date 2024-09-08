@@ -66,7 +66,11 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 		nodeData.Role = "worker"
 	}
 
-	nodeData.Addr = info.Swarm.NodeAddr
+	if info.Swarm.NodeAddr != "" {
+		nodeData.Addr = info.Swarm.NodeAddr
+	} else {
+		nodeData.Addr = nets[0].IPs[0].IP
+	}
 
 	startedReq := ptahClient.StartedReq{
 		NodeData:  nodeData,
