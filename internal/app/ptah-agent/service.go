@@ -2,7 +2,6 @@ package ptah_agent
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -55,27 +54,9 @@ func (e *taskExecutor) updateDockerService(ctx context.Context, req *t.UpdateSer
 func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload t.ServicePayload, secretVars t.SecretVars) (*swarm.ServiceSpec, error) {
 	spec := servicePayload.SwarmServiceSpec
 
-	if secretVars.ConfigName != "" {
-		newVarsJson, err := json.Marshal(secretVars.Values)
-		if err != nil {
-			return nil, errors.Wrapf(err, "marshal vars")
-		}
-
-		_, err = e.docker.ConfigCreate(ctx, swarm.ConfigSpec{
-			Annotations: swarm.Annotations{
-				Name:   secretVars.ConfigName,
-				Labels: secretVars.ConfigLabels,
-			},
-			Data: newVarsJson,
-		})
-
-		if err != nil {
-			return nil, errors.Wrapf(err, "create config %s", secretVars.ConfigName)
-		}
-
-		for key, value := range secretVars.Values {
-			spec.TaskTemplate.ContainerSpec.Env = append(spec.TaskTemplate.ContainerSpec.Env, fmt.Sprintf("%s=%s", key, value))
-		}
+	for key, value := range secretVars.Values {
+		// We will be decoding the secret values here
+		spec.TaskTemplate.ContainerSpec.Env = append(spec.TaskTemplate.ContainerSpec.Env, fmt.Sprintf("%s=%s", key, value))
 	}
 
 	for _, config := range spec.TaskTemplate.ContainerSpec.Configs {

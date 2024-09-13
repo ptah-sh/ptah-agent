@@ -58,6 +58,7 @@ type CreateSecretRes struct {
 
 type ServicePayload struct {
 	AuthConfigName string
+	SecretVars     SecretVars
 	ReleaseCommand struct {
 		ConfigName   string
 		ConfigLabels map[string]string
@@ -74,8 +75,6 @@ type SecretVars struct {
 
 type CreateServiceReq struct {
 	ServicePayload
-
-	SecretVars SecretVars
 }
 
 type CreateServiceRes struct {
@@ -84,8 +83,6 @@ type CreateServiceRes struct {
 
 type UpdateServiceReq struct {
 	ServicePayload
-
-	SecretVars SecretVars
 }
 
 type UpdateServiceRes struct {
