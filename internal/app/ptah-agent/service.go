@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/pkg/errors"
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
-	"strings"
 )
 
 func (e *taskExecutor) createDockerService(ctx context.Context, req *t.CreateServiceReq) (*t.CreateServiceRes, error) {
@@ -55,32 +56,7 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload
 	spec := servicePayload.SwarmServiceSpec
 
 	if secretVars.ConfigName != "" {
-		newVars := make(map[string]string)
-
-		for key, value := range secretVars.Values {
-			newVars[key] = value
-		}
-
-		if secretVars.PreserveFromConfig != "" {
-			preserveConfig, err := e.getConfigByName(ctx, secretVars.PreserveFromConfig)
-			if err != nil {
-				return nil, errors.Wrapf(err, "get config by name %s", secretVars.PreserveFromConfig)
-			}
-
-			preservedVars := make(map[string]string)
-			err = json.Unmarshal(preserveConfig.Spec.Data, &preservedVars)
-			if err != nil {
-				return nil, errors.Wrapf(err, "unmarshal config %s", secretVars.PreserveFromConfig)
-			}
-
-			for _, key := range secretVars.Preserve {
-				if value, ok := preservedVars[key]; ok {
-					newVars[key] = value
-				}
-			}
-		}
-
-		newVarsJson, err := json.Marshal(newVars)
+		newVarsJson, err := json.Marshal(secretVars.Values)
 		if err != nil {
 			return nil, errors.Wrapf(err, "marshal vars")
 		}
@@ -97,7 +73,7 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload
 			return nil, errors.Wrapf(err, "create config %s", secretVars.ConfigName)
 		}
 
-		for key, value := range newVars {
+		for key, value := range secretVars.Values {
 			spec.TaskTemplate.ContainerSpec.Env = append(spec.TaskTemplate.ContainerSpec.Env, fmt.Sprintf("%s=%s", key, value))
 		}
 	}

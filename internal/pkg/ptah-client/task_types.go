@@ -70,9 +70,6 @@ type SecretVars struct {
 	ConfigName   string
 	ConfigLabels map[string]string
 	Values       map[string]string
-
-	Preserve           []string
-	PreserveFromConfig string
 }
 
 type CreateServiceReq struct {
