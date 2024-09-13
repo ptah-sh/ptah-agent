@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.18.0](https://github.com/ptah-sh/ptah-agent/compare/v0.17.2...v0.18.0) (2024-09-13)
+
+
+### Features
+
+* [#49](https://github.com/ptah-sh/ptah-agent/issues/49) drop the 'preserve secrets' feature ([11d3f5c](https://github.com/ptah-sh/ptah-agent/commit/11d3f5c86c0f62720f6efde1655908e2d6a22792))
+* [#51](https://github.com/ptah-sh/ptah-agent/issues/51) drop secrets vars configs support ([688c6c6](https://github.com/ptah-sh/ptah-agent/commit/688c6c6076a7e4bda2a3824265d0c8c3bfe1be97))
+
 ## [0.17.2](https://github.com/ptah-sh/ptah-agent/compare/v0.17.1...v0.17.2) (2024-09-08)
 
 
