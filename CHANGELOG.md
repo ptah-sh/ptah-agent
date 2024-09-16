@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0](https://github.com/ptah-sh/ptah-agent/compare/v0.18.0...v0.19.0) (2024-09-16)
+
+
+### Features
+
+* [#52](https://github.com/ptah-sh/ptah-agent/issues/52) add the launch service task ([ae3b26f](https://github.com/ptah-sh/ptah-agent/commit/ae3b26f180f8e911e7dcc2b8acaf9f86aa6fc6f2))
+
 ## [0.18.0](https://github.com/ptah-sh/ptah-agent/compare/v0.17.2...v0.18.0) (2024-09-13)
 
 
