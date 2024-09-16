@@ -12,6 +12,37 @@ import (
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
+func (e *taskExecutor) launchDockerService(ctx context.Context, req *t.LaunchServiceReq) (*t.LaunchServiceRes, error) {
+	var res t.LaunchServiceRes
+
+	existingService, err := e.getServiceByName(ctx, req.SwarmServiceSpec.Name)
+	if err != nil && err != ErrServiceNotFound {
+		return nil, fmt.Errorf("launch docker service: %w", err)
+	}
+
+	if existingService == nil {
+		// Service doesn't exist, create it
+		createRes, err := e.createDockerService(ctx, (*t.CreateServiceReq)(req))
+		if err != nil {
+			return nil, fmt.Errorf("launch docker service (create): %w", err)
+		}
+
+		res.Action = "created"
+		res.Docker.ID = createRes.Docker.ID
+	} else {
+		// Service exists, update it
+		_, err := e.updateDockerService(ctx, (*t.UpdateServiceReq)(req))
+		if err != nil {
+			return nil, fmt.Errorf("launch docker service (update): %w", err)
+		}
+
+		res.Action = "updated"
+		res.Docker.ID = existingService.ID
+	}
+
+	return &res, nil
+}
+
 func (e *taskExecutor) createDockerService(ctx context.Context, req *t.CreateServiceReq) (*t.CreateServiceRes, error) {
 	var res t.CreateServiceRes
 

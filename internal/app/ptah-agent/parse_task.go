@@ -52,6 +52,8 @@ func parseTask(taskType int, payload string) (interface{}, error) {
 		return unmarshalTask(payload, &ptahClient.JoinSwarmReq{})
 	case 20:
 		return unmarshalTask(payload, &ptahClient.UpdateDirdReq{})
+	case 21:
+		return unmarshalTask(payload, &ptahClient.LaunchServiceReq{})
 	default:
 		return nil, fmt.Errorf("parse task: unknown task type %d", taskType)
 	}

@@ -221,3 +221,12 @@ type UpdateDirdReq struct {
 
 type UpdateDirdRes struct {
 }
+
+type LaunchServiceReq struct {
+	ServicePayload
+}
+
+type LaunchServiceRes struct {
+	Action string `json:"action"` // "created" or "updated"
+	dockerIdRes
+}

@@ -62,6 +62,8 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.joinSwarm(ctx, task.(*t.JoinSwarmReq))
 	case *t.UpdateDirdReq:
 		return e.updateDird(ctx, task.(*t.UpdateDirdReq))
+	case *t.LaunchServiceReq:
+		return e.launchDockerService(ctx, task.(*t.LaunchServiceReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}
