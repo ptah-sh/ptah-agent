@@ -3,31 +3,18 @@ package ptah_agent
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/docker/docker/api/types/registry"
+	"github.com/pkg/errors"
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
 func (e *taskExecutor) createRegistryAuth(ctx context.Context, req *t.CreateRegistryAuthReq) (*t.CreateRegistryAuthRes, error) {
-	if req.PrevConfigName != "" {
-		prev, _, err := e.docker.ConfigInspectWithRaw(ctx, req.PrevConfigName)
-		if err != nil {
-			return nil, err
-		}
-
-		var authConfig registry.AuthConfig
-		err = json.Unmarshal(prev.Spec.Data, &authConfig)
-		if err != nil {
-			return nil, err
-		}
-
-		if req.AuthConfigSpec.Username == "" {
-			req.AuthConfigSpec.Username = authConfig.Username
-		}
-
-		if req.AuthConfigSpec.Password == "" {
-			req.AuthConfigSpec.Password = authConfig.Password
-		}
+	decryptedPassword, err := e.decryptValue(ctx, req.AuthConfigSpec.Password)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decrypt password")
 	}
+	req.AuthConfigSpec.Password = decryptedPassword
 
 	data, err := json.Marshal(req.AuthConfigSpec)
 	if err != nil {

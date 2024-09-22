@@ -21,36 +21,24 @@ import (
 func (e *taskExecutor) createS3Storage(ctx context.Context, req *t.CreateS3StorageReq) (*t.CreateS3StorageRes, error) {
 	var res t.CreateS3StorageRes
 
-	if req.S3StorageSpec.AccessKey == "" || req.S3StorageSpec.SecretKey == "" {
-		if req.PrevConfigName == "" {
-			return nil, fmt.Errorf("create s3 storage: prev config name is empty - empty credentials")
-		}
-
-		prev, err := e.getConfigByName(ctx, req.PrevConfigName)
-		if err != nil {
-			return nil, err
-		}
-
-		var prevSpec t.S3StorageSpec
-		err = json.Unmarshal(prev.Spec.Data, &prevSpec)
-		if err != nil {
-			return nil, fmt.Errorf("create s3 storage: unmarshal prev config: %w", err)
-		}
-
-		req.S3StorageSpec.AccessKey = prevSpec.AccessKey
-		req.S3StorageSpec.SecretKey = prevSpec.SecretKey
+	decryptedSecretKey, err := e.decryptValue(ctx, req.S3StorageSpec.SecretKey)
+	if err != nil {
+		return nil, fmt.Errorf("create s3 storage: decrypt secret key: %w", err)
 	}
 
-	data, err := json.Marshal(req.S3StorageSpec)
+	decryptedSpec := req.S3StorageSpec
+	decryptedSpec.SecretKey = decryptedSecretKey
+
+	data, err := json.Marshal(decryptedSpec)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create s3 storage: marshal spec: %w", err)
 	}
 
 	req.SwarmConfigSpec.Data = data
 
 	config, err := e.docker.ConfigCreate(ctx, req.SwarmConfigSpec)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create s3 storage: create config: %w", err)
 	}
 
 	res.Docker.ID = config.ID

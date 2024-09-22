@@ -2,6 +2,7 @@ package ptah_agent
 
 import (
 	"context"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
@@ -12,7 +13,15 @@ import (
 func (e *taskExecutor) createDockerSecret(ctx context.Context, req *t.CreateSecretReq) (*t.CreateSecretRes, error) {
 	var res t.CreateSecretRes
 
-	response, err := e.docker.SecretCreate(ctx, req.SwarmSecretSpec)
+	decryptedData, err := e.decryptValue(ctx, string(req.SwarmSecretSpec.Data))
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decrypt secret data")
+	}
+
+	decryptedSpec := req.SwarmSecretSpec
+	decryptedSpec.Data = []byte(decryptedData)
+
+	response, err := e.docker.SecretCreate(ctx, decryptedSpec)
 	if err != nil {
 		return nil, err
 	}

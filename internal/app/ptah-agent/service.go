@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
-	"github.com/pkg/errors"
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
@@ -16,7 +17,7 @@ func (e *taskExecutor) launchDockerService(ctx context.Context, req *t.LaunchSer
 	var res t.LaunchServiceRes
 
 	existingService, err := e.getServiceByName(ctx, req.SwarmServiceSpec.Name)
-	if err != nil && err != ErrServiceNotFound {
+	if err != nil && !errors.Is(err, ErrServiceNotFound) {
 		return nil, fmt.Errorf("launch docker service: %w", err)
 	}
 
@@ -85,9 +86,13 @@ func (e *taskExecutor) updateDockerService(ctx context.Context, req *t.UpdateSer
 func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload t.ServicePayload, secretVars t.SecretVars) (*swarm.ServiceSpec, error) {
 	spec := servicePayload.SwarmServiceSpec
 
-	for key, value := range secretVars.Values {
-		// We will be decoding the secret values here
-		spec.TaskTemplate.ContainerSpec.Env = append(spec.TaskTemplate.ContainerSpec.Env, fmt.Sprintf("%s=%s", key, value))
+	for key, encryptedValue := range secretVars {
+		decryptedValue, err := e.decryptValue(ctx, encryptedValue)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to decrypt value for %s", key)
+		}
+
+		spec.TaskTemplate.ContainerSpec.Env = append(spec.TaskTemplate.ContainerSpec.Env, fmt.Sprintf("%s=%s", key, decryptedValue))
 	}
 
 	for _, config := range spec.TaskTemplate.ContainerSpec.Configs {
@@ -97,6 +102,15 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload
 		}
 
 		config.ConfigID = cfg.ID
+	}
+
+	for _, secret := range spec.TaskTemplate.ContainerSpec.Secrets {
+		foundSecret, err := e.getSecretByName(ctx, secret.SecretName)
+		if err != nil {
+			return nil, errors.Wrapf(err, "get secret by name %s", secret.SecretName)
+		}
+
+		secret.SecretID = foundSecret.ID
 	}
 
 	if servicePayload.ReleaseCommand.Command != "" {
@@ -149,15 +163,6 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload
 		spec.TaskTemplate.ContainerSpec.Command = []string{
 			"sh", "/ptah/entrypoint.sh",
 		}
-	}
-
-	for _, secret := range spec.TaskTemplate.ContainerSpec.Secrets {
-		foundSecret, err := e.getSecretByName(ctx, secret.SecretName)
-		if err != nil {
-			return nil, errors.Wrapf(err, "get secret by name %s", secret.SecretName)
-		}
-
-		secret.SecretID = foundSecret.ID
 	}
 
 	return &spec, nil

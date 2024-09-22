@@ -17,11 +17,12 @@ import (
 )
 
 type Agent struct {
-	Version string
-	ptah    *ptahClient.Client
-	rootDir string
-	docker  *dockerClient.Client
-	caddy   *caddyClient.Client
+	Version  string
+	ptah     *ptahClient.Client
+	rootDir  string
+	docker   *dockerClient.Client
+	caddy    *caddyClient.Client
+	executor *taskExecutor
 }
 
 func New(version string, baseUrl string, ptahToken string, rootDir string) (*Agent, error) {
@@ -34,13 +35,27 @@ func New(version string, baseUrl string, ptahToken string, rootDir string) (*Age
 	ctx := context.Background()
 	docker.NegotiateAPIVersion(ctx)
 
-	return &Agent{
+	caddy := caddyClient.New("http://127.0.0.1:2019", http.DefaultClient)
+
+	// TODO: refactor to avoid duplication and circular dependency?
+	agent := &Agent{
 		Version: version,
 		ptah:    ptahClient.New(baseUrl, ptahToken),
 		rootDir: rootDir,
-		caddy:   caddyClient.New("http://127.0.0.1:2019", http.DefaultClient),
+		caddy:   caddy,
 		docker:  docker,
-	}, nil
+		executor: &taskExecutor{
+			docker:  docker,
+			caddy:   caddy,
+			rootDir: rootDir,
+			// TODO: use channel instead?
+			stopAgentFlag: false,
+		},
+	}
+
+	agent.executor.agent = agent
+
+	return agent, nil
 }
 
 func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, error) {
@@ -91,13 +106,30 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 			})
 		}
 
+		workerJoinToken, err := a.executor.encryptValue(ctx, swarm.JoinTokens.Worker)
+		if err != nil {
+			return nil, err
+		}
+
+		managerJoinToken, err := a.executor.encryptValue(ctx, swarm.JoinTokens.Manager)
+		if err != nil {
+			return nil, err
+		}
+
 		startedReq.SwarmData = &ptahClient.SwarmData{
 			JoinTokens: ptahClient.JoinTokens{
-				Worker:  swarm.JoinTokens.Worker,
-				Manager: swarm.JoinTokens.Manager,
+				Worker:  workerJoinToken,
+				Manager: managerJoinToken,
 			},
 			ManagerNodes: managerNodes,
 		}
+
+		encryptionKey, err := a.executor.getEncryptionKey(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		startedReq.SwarmData.EncryptionKey = encryptionKey.PublicKey
 	}
 
 	log.Println("sending started event, base url", a.ptah.BaseUrl)
@@ -115,29 +147,30 @@ func (a *Agent) Start(ctx context.Context) error {
 		return err
 	}
 
-	executor := &taskExecutor{
-		docker:  a.docker,
-		caddy:   a.caddy,
-		rootDir: a.rootDir,
-		// TODO: use channel instead?
-		stopAgentFlag: false,
-		agent:         a,
-	}
-
 	log.Println("connected to server, poll interval", settings.Settings.PollInterval)
+
+	consecutiveFailures := 0
+	maxConsecutiveFailures := 5
 
 	for {
 		taskID, task, err := a.getNextTask(ctx)
 		if err != nil {
 			log.Println("can't get the next task", err)
+			consecutiveFailures++
 
-			if taskID != 0 {
+			if taskID == 0 {
+				if consecutiveFailures >= maxConsecutiveFailures {
+					return fmt.Errorf("shutting down due to %d consecutive failures to get next task", maxConsecutiveFailures)
+				}
+			} else {
 				if err = a.ptah.FailTask(ctx, taskID, &ptahClient.TaskError{
 					Message: err.Error(),
 				}); err != nil {
 					log.Println("can't fail task", err)
 				}
 			}
+		} else {
+			consecutiveFailures = 0
 		}
 
 		if task == nil {
@@ -146,7 +179,7 @@ func (a *Agent) Start(ctx context.Context) error {
 			continue
 		}
 
-		result, err := executor.executeTask(ctx, task)
+		result, err := a.executor.executeTask(ctx, task)
 		// TODO: store the result to re-send it once connection to the ptah server is restored
 		if err == nil {
 			if err = a.ptah.CompleteTask(ctx, taskID, result); err != nil {
@@ -160,7 +193,7 @@ func (a *Agent) Start(ctx context.Context) error {
 			}
 		}
 
-		if executor.stopAgentFlag {
+		if a.executor.stopAgentFlag {
 			log.Println("received stop signal, shutting down gracefully")
 
 			break
@@ -191,7 +224,7 @@ func (a *Agent) getNextTask(ctx context.Context) (taskId int, task interface{}, 
 func (a *Agent) ExecTasks(ctx context.Context, jsonFilePath string) error {
 	// Docker client should already be initialized and version negotiated in New()
 	if a.docker == nil {
-		return fmt.Errorf("Docker client not initialized")
+		return fmt.Errorf("docker client not initialized")
 	}
 
 	// Read the JSON file

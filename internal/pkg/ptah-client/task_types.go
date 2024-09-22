@@ -67,11 +67,7 @@ type ServicePayload struct {
 	SwarmServiceSpec swarm.ServiceSpec
 }
 
-type SecretVars struct {
-	ConfigName   string
-	ConfigLabels map[string]string
-	Values       map[string]string
-}
+type SecretVars map[string]string
 
 type CreateServiceReq struct {
 	ServicePayload
@@ -134,7 +130,6 @@ type ConfirmAgentUpgradeRes struct {
 }
 
 type CreateRegistryAuthReq struct {
-	PrevConfigName  string
 	AuthConfigSpec  registry.AuthConfig
 	SwarmConfigSpec swarm.ConfigSpec
 }
@@ -171,7 +166,6 @@ type S3StorageSpec struct {
 }
 
 type CreateS3StorageReq struct {
-	PrevConfigName  string
 	S3StorageSpec   S3StorageSpec
 	SwarmConfigSpec swarm.ConfigSpec
 }
