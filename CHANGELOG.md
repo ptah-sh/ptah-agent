@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.0](https://github.com/ptah-sh/ptah-agent/compare/v0.19.0...v0.20.0) (2024-09-22)
+
+
+### Features
+
+* [#54](https://github.com/ptah-sh/ptah-agent/issues/54) support secrets encryption ([367eab9](https://github.com/ptah-sh/ptah-agent/commit/367eab9adcf0f1ebf742e41c4b78909afc710bb0))
+
 ## [0.19.0](https://github.com/ptah-sh/ptah-agent/compare/v0.18.0...v0.19.0) (2024-09-16)
 
 
