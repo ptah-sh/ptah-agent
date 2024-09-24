@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/ptah-sh/ptah-agent/compare/v0.20.0...v0.21.0) (2024-09-24)
+
+
+### Features
+
+* [#56](https://github.com/ptah-sh/ptah-agent/issues/56) support docker registry username encryption ([a5df51a](https://github.com/ptah-sh/ptah-agent/commit/a5df51a7832983a8665377860766e2b23acd9a07))
+
 ## [0.20.0](https://github.com/ptah-sh/ptah-agent/compare/v0.19.0...v0.20.0) (2024-09-22)
 
 
