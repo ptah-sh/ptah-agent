@@ -10,6 +10,12 @@ import (
 )
 
 func (e *taskExecutor) createRegistryAuth(ctx context.Context, req *t.CreateRegistryAuthReq) (*t.CreateRegistryAuthRes, error) {
+	decryptedUsername, err := e.decryptValue(ctx, req.AuthConfigSpec.Username)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decrypt username")
+	}
+	req.AuthConfigSpec.Username = decryptedUsername
+
 	decryptedPassword, err := e.decryptValue(ctx, req.AuthConfigSpec.Password)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decrypt password")
