@@ -17,6 +17,30 @@ func (e *ServiceError) Error() string {
 	return fmt.Sprintf("ptah error: %s", e.Message)
 }
 
+type HttpConflictError struct {
+	Message string `json:"error"`
+}
+
+func (e *HttpConflictError) Is(target error) bool {
+	_, ok := target.(*HttpConflictError)
+
+	return ok
+}
+
+func (e *HttpConflictError) Error() string {
+	return fmt.Sprintf("ptah error: %s", e.Message)
+}
+
+func HttpConflictErrorFromJson(body []byte) error {
+	var serviceError HttpConflictError
+	err := json.Unmarshal(body, &serviceError)
+	if err != nil {
+		return nil
+	}
+
+	return &serviceError
+}
+
 type Client struct {
 	BaseUrl   string
 	ptahToken string
@@ -79,7 +103,7 @@ func (c *Client) send(ctx context.Context, method, url string, req interface{}, 
 	}
 
 	if response.StatusCode == http.StatusConflict {
-		return nil, fmt.Errorf("ptah error: %s", string(body))
+		return nil, HttpConflictErrorFromJson(body)
 	}
 
 	var serviceError ServiceError

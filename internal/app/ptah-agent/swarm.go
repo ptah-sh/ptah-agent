@@ -23,6 +23,11 @@ func (e *taskExecutor) initSwarm(ctx context.Context, req *t.InitSwarmReq) (*t.I
 		return nil, errors.Wrapf(err, "init swarm")
 	}
 
+	_, err = e.agent.sendStartedEvent(ctx)
+	if err != nil {
+		log.Println("init swarm: failed to send started event:", err)
+	}
+
 	res.Docker.ID = swarmId
 
 	return &res, nil

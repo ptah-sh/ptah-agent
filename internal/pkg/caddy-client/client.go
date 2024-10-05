@@ -5,9 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"net/http"
+	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type Client struct {
@@ -20,6 +22,31 @@ func New(url string, http *http.Client) *Client {
 		url:  url,
 		http: http,
 	}
+}
+
+func (c *Client) GetMetrics(ctx context.Context) ([]string, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/metrics", c.url), nil)
+	if err != nil {
+		return nil, errors.Wrapf(err, "caddy: failed to create metrics request")
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, errors.Wrapf(err, "caddy: failed to get metrics")
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("caddy: failed to get metrics, status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrapf(err, "caddy: failed to read metrics response body")
+	}
+
+	return strings.Split(string(body), "\n"), nil
 }
 
 func (c *Client) PostConfig(ctx context.Context, config map[string]interface{}) error {

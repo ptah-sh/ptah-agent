@@ -11,11 +11,11 @@ import (
 )
 
 type taskExecutor struct {
-	agent         *Agent
-	docker        *dockerClient.Client
-	caddy         *caddyClient.Client
-	rootDir       string
-	stopAgentFlag bool
+	safeClient *SafeClient
+	agent      *Agent
+	docker     *dockerClient.Client
+	caddy      *caddyClient.Client
+	rootDir    string
 }
 
 func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (interface{}, error) {
@@ -67,8 +67,4 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}
-}
-
-func (e *taskExecutor) stop() {
-	e.stopAgentFlag = true
 }

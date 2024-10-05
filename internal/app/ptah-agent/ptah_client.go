@@ -17,12 +17,15 @@ import (
 )
 
 type Agent struct {
-	Version  string
-	ptah     *ptahClient.Client
-	rootDir  string
-	docker   *dockerClient.Client
-	caddy    *caddyClient.Client
-	executor *taskExecutor
+	Version      string
+	ptah         *ptahClient.Client
+	safeClient   *SafeClient
+	rootDir      string
+	docker       *dockerClient.Client
+	caddy        *caddyClient.Client
+	executor     *taskExecutor
+	metricsAgent *MetricsAgent
+	cancel       context.CancelFunc
 }
 
 func New(version string, baseUrl string, ptahToken string, rootDir string) (*Agent, error) {
@@ -33,24 +36,36 @@ func New(version string, baseUrl string, ptahToken string, rootDir string) (*Age
 
 	// Create a background context for API version negotiation
 	ctx := context.Background()
+
 	docker.NegotiateAPIVersion(ctx)
 
 	caddy := caddyClient.New("http://127.0.0.1:2019", http.DefaultClient)
 
+	ptah := ptahClient.New(baseUrl, ptahToken)
+
+	safeClient, err := NewSafeClient(ptah, rootDir)
+	if err != nil {
+		return nil, err
+	}
+
+	metricsAgent := NewMetricsAgent(safeClient, caddy, 5*time.Second)
+
 	// TODO: refactor to avoid duplication and circular dependency?
 	agent := &Agent{
 		Version: version,
-		ptah:    ptahClient.New(baseUrl, ptahToken),
-		rootDir: rootDir,
-		caddy:   caddy,
-		docker:  docker,
+		// TODO: replace ptah with safeClient
+		ptah:       ptah,
+		safeClient: safeClient,
+		rootDir:    rootDir,
+		caddy:      caddy,
+		docker:     docker,
 		executor: &taskExecutor{
-			docker:  docker,
-			caddy:   caddy,
-			rootDir: rootDir,
-			// TODO: use channel instead?
-			stopAgentFlag: false,
+			docker:     docker,
+			caddy:      caddy,
+			rootDir:    rootDir,
+			safeClient: safeClient,
 		},
+		metricsAgent: metricsAgent,
 	}
 
 	agent.executor.agent = agent
@@ -142,6 +157,16 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 }
 
 func (a *Agent) Start(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	a.cancel = cancel
+
+	defer a.safeClient.Close()
+
+	a.metricsAgent.Start(ctx)
+	a.safeClient.StartBackgroundRequestsProcessing(ctx)
+
 	settings, err := a.sendStartedEvent(ctx)
 	if err != nil {
 		return err
@@ -153,54 +178,71 @@ func (a *Agent) Start(ctx context.Context) error {
 	maxConsecutiveFailures := 5
 
 	for {
-		taskID, task, err := a.getNextTask(ctx)
-		if err != nil {
-			log.Println("can't get the next task", err)
-			consecutiveFailures++
+		select {
+		case <-ctx.Done():
+			log.Println("received stop signal, shutting down gracefully")
 
-			if taskID == 0 {
-				if consecutiveFailures >= maxConsecutiveFailures {
-					return fmt.Errorf("shutting down due to %d consecutive failures to get next task", maxConsecutiveFailures)
+			return nil
+		case <-time.After(time.Duration(settings.Settings.PollInterval) * time.Second):
+			err = a.safeClient.PerformForegroundRequests(ctx)
+			if err != nil {
+				log.Println("can't perform calls", err)
+				consecutiveFailures++
+			}
+
+			if consecutiveFailures >= maxConsecutiveFailures {
+				return fmt.Errorf("shutting down due to %d consecutive failures performing calls", maxConsecutiveFailures)
+			}
+
+			if err != nil {
+				continue
+			}
+
+			taskID, task, err := a.getNextTask(ctx)
+			if err != nil {
+				log.Println("can't get the next task", err)
+				consecutiveFailures++
+
+				if taskID == 0 {
+					if consecutiveFailures >= maxConsecutiveFailures {
+						return fmt.Errorf("shutting down due to %d consecutive failures to get next task", maxConsecutiveFailures)
+					}
+				} else {
+					if err = a.safeClient.FailTask(ctx, taskID, &ptahClient.TaskError{
+						Message: err.Error(),
+					}); err != nil {
+						log.Println("can't fail task", err)
+					}
 				}
 			} else {
-				if err = a.ptah.FailTask(ctx, taskID, &ptahClient.TaskError{
+				consecutiveFailures = 0
+			}
+
+			if task == nil {
+				continue
+			}
+
+			result, err := a.executor.executeTask(ctx, task)
+
+			if err == nil {
+				if err = a.safeClient.CompleteTask(ctx, taskID, result); err != nil {
+					log.Println("can't complete task", err)
+				}
+			} else {
+				if err = a.safeClient.FailTask(ctx, taskID, &ptahClient.TaskError{
 					Message: err.Error(),
 				}); err != nil {
 					log.Println("can't fail task", err)
 				}
 			}
-		} else {
-			consecutiveFailures = 0
-		}
-
-		if task == nil {
-			time.Sleep(time.Duration(settings.Settings.PollInterval) * time.Second)
-
-			continue
-		}
-
-		result, err := a.executor.executeTask(ctx, task)
-		// TODO: store the result to re-send it once connection to the ptah server is restored
-		if err == nil {
-			if err = a.ptah.CompleteTask(ctx, taskID, result); err != nil {
-				log.Println("can't complete task", err)
-			}
-		} else {
-			if err = a.ptah.FailTask(ctx, taskID, &ptahClient.TaskError{
-				Message: err.Error(),
-			}); err != nil {
-				log.Println("can't fail task", err)
-			}
-		}
-
-		if a.executor.stopAgentFlag {
-			log.Println("received stop signal, shutting down gracefully")
-
-			break
 		}
 	}
+}
 
-	return nil
+func (a *Agent) Stop() {
+	if a.cancel != nil {
+		a.cancel()
+	}
 }
 
 func (a *Agent) getNextTask(ctx context.Context) (taskId int, task interface{}, err error) {

@@ -3,14 +3,15 @@ package ptah_agent
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 	"io"
 	"math"
 	"net/http"
 	"os"
 	"path"
 	"time"
+
+	"github.com/pkg/errors"
+	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
 func (e *taskExecutor) downloadAgentUpgrade(ctx context.Context, req *t.DownloadAgentUpgradeReq) (*t.DownloadAgentUpgradeRes, error) {
@@ -87,7 +88,7 @@ func (e *taskExecutor) updateAgentSymlink(ctx context.Context, req *t.UpdateAgen
 		return nil, err
 	}
 
-	e.stop()
+	e.agent.Stop()
 
 	return &t.UpdateAgentSymlinkRes{}, nil
 }

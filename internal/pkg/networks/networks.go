@@ -28,7 +28,8 @@ func List() ([]Network, error) {
 		isDown := i.Flags&net.FlagUp == 0
 		isNotBroadcast := i.Flags&net.FlagBroadcast == 0
 		isDockerNetwork := strings.Contains(i.Name, "docker")
-		if isLoopback || isDown || isNotBroadcast || isDockerNetwork {
+		isBridgeNetwork := strings.Contains(i.Name, "bridge") || strings.Contains(i.Name, "br-")
+		if isLoopback || isDown || isNotBroadcast || isDockerNetwork || isBridgeNetwork {
 			continue
 		}
 
