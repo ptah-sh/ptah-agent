@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.22.0](https://github.com/ptah-sh/ptah-agent/compare/v0.21.0...v0.22.0) (2024-10-05)
+
+
+### Features
+
+* [#58](https://github.com/ptah-sh/ptah-agent/issues/58) send caddy and system metrics to ptah-server ([7fed58c](https://github.com/ptah-sh/ptah-agent/commit/7fed58c41e4d7e2c88a0c0acfe629471a0299197))
+
 ## [0.21.0](https://github.com/ptah-sh/ptah-agent/compare/v0.20.0...v0.21.0) (2024-09-24)
 
 
