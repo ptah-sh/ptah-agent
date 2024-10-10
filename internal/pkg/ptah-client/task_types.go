@@ -57,7 +57,6 @@ type CreateSecretRes struct {
 }
 
 type ServicePayload struct {
-	AuthConfigName string
 	SecretVars     SecretVars
 	ReleaseCommand struct {
 		ConfigName   string
@@ -190,14 +189,22 @@ type ServiceExecRes struct {
 	Output []string `json:"output"`
 }
 
+type ArchiveSpec struct {
+	Enabled bool
+	Format  string
+}
+
 type S3UploadReq struct {
+	Archive             ArchiveSpec
 	S3StorageConfigName string
 	VolumeSpec          mount.Mount
 	SrcFilePath         string
 	DestFilePath        string
+	RemoveSrcFile       bool
 }
 
 type S3UploadRes struct {
+	Output []string `json:"output"`
 }
 
 type JoinSwarmReq struct {

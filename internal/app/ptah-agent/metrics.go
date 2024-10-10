@@ -92,12 +92,16 @@ func (m *MetricsAgent) Start(ctx context.Context) error {
 		return err
 	}
 
+	ticker := time.NewTicker(m.interval)
+
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
+				ticker.Stop()
+
 				return
-			case <-time.After(m.interval):
+			case <-ticker.C:
 				ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 				defer cancel()
 

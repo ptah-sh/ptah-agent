@@ -14,15 +14,18 @@ import (
 )
 
 func (e *taskExecutor) launchDockerService(ctx context.Context, req *t.LaunchServiceReq) (*t.LaunchServiceRes, error) {
+	ctx, log := ContextWithLoggerValues(ctx, "service", req.SwarmServiceSpec.Name)
+
 	var res t.LaunchServiceRes
 
-	existingService, err := e.getServiceByName(ctx, req.SwarmServiceSpec.Name)
+	service, err := e.getServiceByName(ctx, req.SwarmServiceSpec.Name)
 	if err != nil && !errors.Is(err, ErrServiceNotFound) {
 		return nil, fmt.Errorf("launch docker service: %w", err)
 	}
 
-	if existingService == nil {
-		// Service doesn't exist, create it
+	if service == nil {
+		log.Debug("service not found, creating")
+
 		createRes, err := e.createDockerService(ctx, (*t.CreateServiceReq)(req))
 		if err != nil {
 			return nil, fmt.Errorf("launch docker service (create): %w", err)
@@ -31,14 +34,27 @@ func (e *taskExecutor) launchDockerService(ctx context.Context, req *t.LaunchSer
 		res.Action = "created"
 		res.Docker.ID = createRes.Docker.ID
 	} else {
-		// Service exists, update it
+		log.Debug("service found, updating")
+
 		_, err := e.updateDockerService(ctx, (*t.UpdateServiceReq)(req))
 		if err != nil {
 			return nil, fmt.Errorf("launch docker service (update): %w", err)
 		}
 
 		res.Action = "updated"
-		res.Docker.ID = existingService.ID
+		res.Docker.ID = service.ID
+	}
+
+	serviceWithRaw, _, err := e.docker.ServiceInspectWithRaw(ctx, res.Docker.ID, types.ServiceInspectOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("launch docker service (inspect): %w", err)
+	}
+
+	service = &serviceWithRaw
+
+	err = e.monitorServiceLaunch(ctx, service)
+	if err != nil {
+		return nil, fmt.Errorf("launch docker service (monitor): %w", err)
 	}
 
 	return &res, nil
@@ -63,6 +79,8 @@ func (e *taskExecutor) createDockerService(ctx context.Context, req *t.CreateSer
 }
 
 func (e *taskExecutor) updateDockerService(ctx context.Context, req *t.UpdateServiceReq) (*t.UpdateServiceRes, error) {
+	log := Logger(ctx)
+
 	var res t.UpdateServiceRes
 
 	spec, err := e.prepareServicePayload(ctx, req.ServicePayload, req.SecretVars)
@@ -75,10 +93,19 @@ func (e *taskExecutor) updateDockerService(ctx context.Context, req *t.UpdateSer
 		return nil, err
 	}
 
+	log.Debug("update docker service", "service", service.Spec.Name, "id", service.ID, "version", service.Version)
+
 	_, err = e.docker.ServiceUpdate(ctx, service.ID, service.Version, *spec, types.ServiceUpdateOptions{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "update docker service")
 	}
+
+	inspected, _, err := e.docker.ServiceInspectWithRaw(ctx, service.ID, types.ServiceInspectOptions{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "inspect docker service")
+	}
+
+	log.Debug("updated docker service", "service", inspected.Spec.Name, "id", inspected.ID, "version", inspected.Version)
 
 	return &res, nil
 }

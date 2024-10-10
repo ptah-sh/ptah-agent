@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -147,7 +147,7 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 		startedReq.SwarmData.EncryptionKey = encryptionKey.PublicKey
 	}
 
-	log.Println("sending started event, base url", a.ptah.BaseUrl)
+	slog.Info("sending started event", "base_url", a.ptah.BaseUrl)
 	settings, err := a.ptah.Started(ctx, startedReq)
 	if err != nil {
 		return nil, err
@@ -159,6 +159,18 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 func (a *Agent) Start(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	ptahDebug := os.Getenv("PTAH_DEBUG")
+
+	var level slog.Level
+	if ptahDebug == "true" {
+		level = slog.LevelDebug
+	} else {
+		level = slog.LevelInfo
+	}
+
+	ctx = WithLogger(ctx, slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
+	log := Logger(ctx)
 
 	a.cancel = cancel
 
@@ -172,21 +184,24 @@ func (a *Agent) Start(ctx context.Context) error {
 		return err
 	}
 
-	log.Println("connected to server, poll interval", settings.Settings.PollInterval)
+	log.Info("connected to server", "poll_interval", settings.Settings.PollInterval)
 
 	consecutiveFailures := 0
 	maxConsecutiveFailures := 5
 
+	ticker := time.NewTicker(time.Duration(settings.Settings.PollInterval) * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("received stop signal, shutting down gracefully")
+			log.Info("received stop signal, shutting down gracefully")
 
 			return nil
-		case <-time.After(time.Duration(settings.Settings.PollInterval) * time.Second):
+		case <-ticker.C:
 			err = a.safeClient.PerformForegroundRequests(ctx)
 			if err != nil {
-				log.Println("can't perform calls", err)
+				log.Error("can't perform calls", "error", err)
 				consecutiveFailures++
 			}
 
@@ -200,7 +215,7 @@ func (a *Agent) Start(ctx context.Context) error {
 
 			taskID, task, err := a.getNextTask(ctx)
 			if err != nil {
-				log.Println("can't get the next task", err)
+				log.Error("can't get the next task", "error", err)
 				consecutiveFailures++
 
 				if taskID == 0 {
@@ -211,7 +226,7 @@ func (a *Agent) Start(ctx context.Context) error {
 					if err = a.safeClient.FailTask(ctx, taskID, &ptahClient.TaskError{
 						Message: err.Error(),
 					}); err != nil {
-						log.Println("can't fail task", err)
+						log.Error("can't fail task", "error", err)
 					}
 				}
 			} else {
@@ -226,13 +241,13 @@ func (a *Agent) Start(ctx context.Context) error {
 
 			if err == nil {
 				if err = a.safeClient.CompleteTask(ctx, taskID, result); err != nil {
-					log.Println("can't complete task", err)
+					log.Error("can't complete task", "error", err)
 				}
 			} else {
 				if err = a.safeClient.FailTask(ctx, taskID, &ptahClient.TaskError{
 					Message: err.Error(),
 				}); err != nil {
-					log.Println("can't fail task", err)
+					log.Error("can't fail task", "error", err)
 				}
 			}
 		}
@@ -307,7 +322,7 @@ func (a *Agent) ExecTasks(ctx context.Context, jsonFilePath string) error {
 			return fmt.Errorf("error executing task %d: %w", taskRes.ID, err)
 		}
 
-		log.Printf("Task %d (Type: %d) executed successfully. Result: %+v", taskRes.ID, taskRes.TaskType, result)
+		slog.Info("Task %d (Type: %d) executed successfully. Result: %+v", "task_id", taskRes.ID, "task_type", taskRes.TaskType, "result", result)
 	}
 
 	return nil
@@ -325,7 +340,7 @@ func (a *Agent) retryTask(ctx context.Context, executor *taskExecutor, task inte
 			return nil, fmt.Errorf("'Apply Caddy Config' task execution failed after %v: %w", maxDuration, err)
 		}
 
-		log.Printf("'Apply Caddy Config' task failed, retrying in %v: %v", retryInterval, err)
+		slog.Warn("'Apply Caddy Config' task failed", "retry_interval", retryInterval, "error", err)
 		time.Sleep(retryInterval)
 	}
 }

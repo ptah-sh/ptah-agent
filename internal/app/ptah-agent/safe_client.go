@@ -204,11 +204,14 @@ func (c *SafeClient) PerformBackgroundRequests(ctx context.Context) error {
 
 func (c *SafeClient) StartBackgroundRequestsProcessing(ctx context.Context) error {
 	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		defer ticker.Stop()
+
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(1 * time.Second):
+			case <-ticker.C:
 				err := c.PerformBackgroundRequests(ctx)
 				if err != nil {
 					log.Println("error performing background requests:", err)
