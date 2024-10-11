@@ -55,6 +55,8 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 	// TODO: make timeout configurable
 	timeout := time.After(time.Duration(10) * time.Minute)
 
+	successfullChecks := 0
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -71,13 +73,44 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 				return err
 			}
 
-			log.Debug("service inspected", "state", service.UpdateStatus.State)
+			if service.UpdateStatus == nil {
+				log.Debug("service inspected, update status is nil, checking tasks")
 
-			switch service.UpdateStatus.State {
-			case swarm.UpdateStateCompleted:
-				return nil
-			case swarm.UpdateStateRollbackCompleted:
-				return errors.Errorf("service update failed: %s", service.UpdateStatus.Message)
+				tasks, err := e.docker.TaskList(ctx, types.TaskListOptions{
+					Filters: filters.NewArgs(
+						filters.Arg("service", service.ID),
+					),
+				})
+				if err != nil {
+					return err
+				}
+
+				if len(tasks) == 0 && service.Spec.Mode.Replicated.Replicas != nil && *service.Spec.Mode.Replicated.Replicas == 0 {
+					return nil
+				}
+
+				for _, t := range tasks {
+					if t.Status.Err != "" {
+						return errors.Errorf("task %s failed: %s", t.ID, t.Status.Err)
+					}
+				}
+
+				successfullChecks++
+
+				if successfullChecks >= 3 {
+					log.Debug("service launched", "service_id", service.ID, "successfull_checks", successfullChecks)
+
+					return nil
+				}
+			} else {
+				log.Debug("service inspected", "state", service.UpdateStatus.State)
+
+				switch service.UpdateStatus.State {
+				case swarm.UpdateStateCompleted:
+					return nil
+				case swarm.UpdateStateRollbackCompleted:
+					return errors.Errorf("service update failed: %s", service.UpdateStatus.Message)
+				}
 			}
 		}
 	}
