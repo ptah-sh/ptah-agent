@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.23.0](https://github.com/ptah-sh/ptah-agent/compare/v0.22.0...v0.23.0) (2024-10-14)
+
+
+### Features
+
+* [#60](https://github.com/ptah-sh/ptah-agent/issues/60) support removing files from s3 storages ([78ae011](https://github.com/ptah-sh/ptah-agent/commit/78ae01161edd840f90275750e9e17c9975b3c71e))
+* [#61](https://github.com/ptah-sh/ptah-agent/issues/61) support replicatedjob-based backups ([7e8a165](https://github.com/ptah-sh/ptah-agent/commit/7e8a165e83f2a6325a141784972314565c8652e7))
+* [#63](https://github.com/ptah-sh/ptah-agent/issues/63) support downloading files from s3 storage ([a0cd1e3](https://github.com/ptah-sh/ptah-agent/commit/a0cd1e370134d4f2048a8adba0e799af163efc2e))
+
+
+### Bug Fixes
+
+* [#61](https://github.com/ptah-sh/ptah-agent/issues/61) service start monitoring for new services ([ecb13d9](https://github.com/ptah-sh/ptah-agent/commit/ecb13d927f5c4f28025f37de51f3843f9b3b1175))
+
 ## [0.22.0](https://github.com/ptah-sh/ptah-agent/compare/v0.21.0...v0.22.0) (2024-10-05)
 
 
