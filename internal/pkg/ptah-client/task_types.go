@@ -190,8 +190,7 @@ type ServiceExecRes struct {
 }
 
 type ArchiveSpec struct {
-	Enabled bool
-	Format  string
+	Format string
 }
 
 type S3UploadReq struct {
@@ -200,10 +199,20 @@ type S3UploadReq struct {
 	VolumeSpec          mount.Mount
 	SrcFilePath         string
 	DestFilePath        string
-	RemoveSrcFile       bool
 }
 
 type S3UploadRes struct {
+	Output []string `json:"output"`
+}
+
+type S3DownloadReq struct {
+	S3StorageConfigName string
+	VolumeSpec          mount.Mount
+	SrcFilePath         string
+	DestFilePath        string
+}
+
+type S3DownloadRes struct {
 	Output []string `json:"output"`
 }
 

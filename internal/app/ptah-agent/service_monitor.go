@@ -159,8 +159,10 @@ func (e *taskExecutor) monitorJobServiceLaunch(ctx context.Context, service *swa
 						return errors.Errorf("task %s failed: %s\n%s", t.ID, t.Status.Err, logs)
 					}
 
-					containerID = t.Status.ContainerStatus.ContainerID
-					break
+					if t.Status.ContainerStatus != nil {
+						containerID = t.Status.ContainerStatus.ContainerID
+						break
+					}
 				}
 			}
 		}

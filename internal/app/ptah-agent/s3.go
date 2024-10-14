@@ -19,8 +19,11 @@ import (
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
-//go:embed s3.sh
-var s3Script string
+//go:embed s3_download.sh
+var s3DownloadScript string
+
+//go:embed s3_upload.sh
+var s3UploadScript string
 
 func (e *taskExecutor) createS3Storage(ctx context.Context, req *t.CreateS3StorageReq) (*t.CreateS3StorageRes, error) {
 	var res t.CreateS3StorageRes
@@ -51,7 +54,11 @@ func (e *taskExecutor) createS3Storage(ctx context.Context, req *t.CreateS3Stora
 }
 
 func (e *taskExecutor) checkS3Storage(ctx context.Context, req *t.CheckS3StorageReq) (*t.CheckS3StorageRes, error) {
-	_, err := e.uploadS3FileWithHelper(ctx, []mount.Mount{}, t.ArchiveSpec{}, false, req.S3StorageConfigName, "/tmp/check-access.txt", ".check-access")
+	envVars := []string{
+		fmt.Sprintf("ARCHIVE_FORMAT=%s", "tar.gz"),
+	}
+
+	_, err := e.uploadS3FileWithHelper(ctx, []mount.Mount{}, envVars, req.S3StorageConfigName, "/tmp/check-access.txt", ".check-access.tar.gz")
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +67,11 @@ func (e *taskExecutor) checkS3Storage(ctx context.Context, req *t.CheckS3Storage
 }
 
 func (e *taskExecutor) s3upload(ctx context.Context, req *t.S3UploadReq) (*t.S3UploadRes, error) {
-	output, err := e.uploadS3FileWithHelper(ctx, []mount.Mount{req.VolumeSpec}, req.Archive, req.RemoveSrcFile, req.S3StorageConfigName, req.SrcFilePath, req.DestFilePath)
+	envVars := []string{
+		fmt.Sprintf("ARCHIVE_FORMAT=%s", req.Archive.Format),
+	}
+
+	output, err := e.uploadS3FileWithHelper(ctx, []mount.Mount{req.VolumeSpec}, envVars, req.S3StorageConfigName, req.SrcFilePath, req.DestFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +81,24 @@ func (e *taskExecutor) s3upload(ctx context.Context, req *t.S3UploadReq) (*t.S3U
 	}, nil
 }
 
-func (e *taskExecutor) uploadS3FileWithHelper(ctx context.Context, mounts []mount.Mount, archiveSpec t.ArchiveSpec, removeSrcFile bool, s3StorageConfigName, srcFilePath, destFilePath string) ([]string, error) {
+func (e *taskExecutor) s3download(ctx context.Context, req *t.S3DownloadReq) (*t.S3DownloadRes, error) {
+	envVars := []string{}
+
+	logs, err := e.runS3Cmd(ctx, []mount.Mount{req.VolumeSpec}, envVars, s3DownloadScript, req.S3StorageConfigName, req.SrcFilePath, req.DestFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("download from s3: %w", err)
+	}
+
+	return &t.S3DownloadRes{
+		Output: logs,
+	}, nil
+}
+
+func (e *taskExecutor) uploadS3FileWithHelper(ctx context.Context, mounts []mount.Mount, envVars []string, s3StorageConfigName, srcFilePath, destFilePath string) ([]string, error) {
+	return e.runS3Cmd(ctx, mounts, envVars, s3UploadScript, s3StorageConfigName, srcFilePath, destFilePath)
+}
+
+func (e *taskExecutor) runS3Cmd(ctx context.Context, mounts []mount.Mount, envVars []string, s3Script, s3StorageConfigName, srcFilePath, destFilePath string) ([]string, error) {
 	credentialsConfig, err := e.getConfigByName(ctx, s3StorageConfigName)
 	if err != nil {
 		return nil, fmt.Errorf("check s3 storage: get config: %w", err)
@@ -100,6 +128,19 @@ func (e *taskExecutor) uploadS3FileWithHelper(ctx context.Context, mounts []moun
 		return nil, fmt.Errorf("check s3 storage: read image pull: %w", err)
 	}
 
+	vars := []string{
+		fmt.Sprintf("S3_ACCESS_KEY=%s", s3StorageSpec.AccessKey),
+		fmt.Sprintf("S3_SECRET_KEY=%s", s3StorageSpec.SecretKey),
+		fmt.Sprintf("S3_ENDPOINT=%s", s3StorageSpec.Endpoint),
+		fmt.Sprintf("S3_REGION=%s", s3StorageSpec.Region),
+		fmt.Sprintf("S3_BUCKET=%s", s3StorageSpec.Bucket),
+		fmt.Sprintf("PATH_PREFIX=%s", strings.Trim(s3StorageSpec.PathPrefix, "/")),
+		fmt.Sprintf("SRC_FILE_PATH=%s", strings.TrimPrefix(srcFilePath, "/")),
+		fmt.Sprintf("DEST_FILE_PATH=%s", strings.TrimPrefix(destFilePath, "/")),
+	}
+
+	vars = append(vars, envVars...)
+
 	createResponse, err := e.docker.ContainerCreate(ctx, &container.Config{
 		User:  "root",
 		Image: "d3fk/s3cmd",
@@ -110,19 +151,7 @@ func (e *taskExecutor) uploadS3FileWithHelper(ctx context.Context, mounts []moun
 		Cmd: []string{
 			s3Script,
 		},
-		Env: []string{
-			fmt.Sprintf("ARCHIVE_ENABLED=%t", archiveSpec.Enabled),
-			fmt.Sprintf("ARCHIVE_FORMAT=%s", archiveSpec.Format),
-			fmt.Sprintf("S3_ACCESS_KEY=%s", s3StorageSpec.AccessKey),
-			fmt.Sprintf("S3_SECRET_KEY=%s", s3StorageSpec.SecretKey),
-			fmt.Sprintf("S3_ENDPOINT=%s", s3StorageSpec.Endpoint),
-			fmt.Sprintf("S3_REGION=%s", s3StorageSpec.Region),
-			fmt.Sprintf("S3_BUCKET=%s", s3StorageSpec.Bucket),
-			fmt.Sprintf("PATH_PREFIX=%s", strings.Trim(s3StorageSpec.PathPrefix, "/")),
-			fmt.Sprintf("SRC_FILE_PATH=%s", srcFilePath),
-			fmt.Sprintf("DEST_FILE_PATH=%s", strings.TrimPrefix(destFilePath, "/")),
-			fmt.Sprintf("REMOVE_SRC_FILE=%t", removeSrcFile),
-		},
+		Env: vars,
 	}, &container.HostConfig{
 		Mounts: mounts,
 	}, &network.NetworkingConfig{}, &v1.Platform{}, containerName)

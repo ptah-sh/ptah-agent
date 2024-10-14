@@ -48,6 +48,12 @@ func (c *Client) CompleteTask(ctx context.Context, taskID int, taskResult interf
 func (c *Client) FailTask(ctx context.Context, taskID int, result interface{}) error {
 	_, err := c.send(ctx, "POST", fmt.Sprintf("/tasks/%d/fail", taskID), result, nil)
 	if err != nil {
+		if errors.Is(err, &HttpConflictError{}) {
+			log.Printf("task %d already failed", taskID)
+
+			return nil
+		}
+
 		return errors.Wrapf(err, "POST /tasks/%d/fail failed", taskID)
 	}
 

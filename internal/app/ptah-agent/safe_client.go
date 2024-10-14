@@ -215,6 +215,8 @@ func (c *SafeClient) StartBackgroundRequestsProcessing(ctx context.Context) erro
 				err := c.PerformBackgroundRequests(ctx)
 				if err != nil {
 					log.Println("error performing background requests:", err)
+
+					time.Sleep(4 * time.Second)
 				}
 			}
 		}

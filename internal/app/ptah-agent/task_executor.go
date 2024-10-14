@@ -64,6 +64,8 @@ func (e *taskExecutor) executeTask(ctx context.Context, task interface{}) (inter
 		return e.updateDird(ctx, task.(*t.UpdateDirdReq))
 	case *t.LaunchServiceReq:
 		return e.launchDockerService(ctx, task.(*t.LaunchServiceReq))
+	case *t.S3DownloadReq:
+		return e.s3download(ctx, task.(*t.S3DownloadReq))
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}
