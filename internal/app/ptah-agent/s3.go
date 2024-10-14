@@ -10,6 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
@@ -199,4 +203,44 @@ func (e *taskExecutor) runS3Cmd(ctx context.Context, mounts []mount.Mount, envVa
 	}
 
 	return nil, nil
+}
+
+func (e *taskExecutor) removeS3Files(ctx context.Context, req *t.S3RemoveReq) (*t.S3RemoveRes, error) {
+	log := Logger(ctx)
+
+	credentialsConfig, err := e.getConfigByName(ctx, req.S3StorageConfigName)
+	if err != nil {
+		return nil, fmt.Errorf("remove s3 file: get config: %w", err)
+	}
+
+	var s3StorageSpec t.S3StorageSpec
+	err = json.Unmarshal(credentialsConfig.Spec.Data, &s3StorageSpec)
+	if err != nil {
+		return nil, fmt.Errorf("remove s3 file: unmarshal config: %w", err)
+	}
+
+	s3client := s3.NewFromConfig(aws.Config{
+		Credentials: credentials.NewStaticCredentialsProvider(
+			s3StorageSpec.AccessKey,
+			s3StorageSpec.SecretKey,
+			"",
+		),
+		Region:       s3StorageSpec.Region,
+		BaseEndpoint: aws.String("https://" + s3StorageSpec.Endpoint),
+	})
+
+	fullPath := strings.Trim(s3StorageSpec.PathPrefix, "/") + "/" + strings.TrimPrefix(req.FilePath, "/")
+
+	log.Debug("remove s3 file", "bucket", s3StorageSpec.Bucket, "full_path", fullPath)
+
+	_, err = s3client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(s3StorageSpec.Bucket),
+		Key:    aws.String(fullPath),
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("remove s3 file: delete object: %w", err)
+	}
+
+	return &t.S3RemoveRes{}, nil
 }

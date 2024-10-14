@@ -216,6 +216,14 @@ type S3DownloadRes struct {
 	Output []string `json:"output"`
 }
 
+type S3RemoveReq struct {
+	S3StorageConfigName string
+	FilePath            string
+}
+
+type S3RemoveRes struct {
+}
+
 type JoinSwarmReq struct {
 	JoinSpec swarm.JoinRequest
 }
