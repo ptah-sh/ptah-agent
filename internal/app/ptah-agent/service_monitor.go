@@ -89,10 +89,23 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 					return nil
 				}
 
+				failedTasks := 0
+				var lastErr string
 				for _, t := range tasks {
 					if t.Status.Err != "" {
-						return errors.Errorf("task %s failed: %s", t.ID, t.Status.Err)
+						failedTasks++
+						lastErr = t.Status.Err
 					}
+				}
+
+				if failedTasks > 5 {
+					return errors.Errorf("task failed: %s", lastErr)
+				}
+
+				if failedTasks > 0 {
+					log.Debug("service has failed tasks", "failed_tasks", failedTasks, "last_error", lastErr)
+
+					continue
 				}
 
 				successfullChecks++
