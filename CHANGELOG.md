@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.2](https://github.com/ptah-sh/ptah-agent/compare/v0.23.1...v0.23.2) (2024-10-18)
+
+
+### Bug Fixes
+
+* ptah-sh/ptah-server[#239](https://github.com/ptah-sh/ptah-agent/issues/239) wait longer for tasks to complete ([699adf7](https://github.com/ptah-sh/ptah-agent/commit/699adf756cc96a4b10d05cfd1bb9bcdf3a4e0285))
+
 ## [0.23.1](https://github.com/ptah-sh/ptah-agent/compare/v0.23.0...v0.23.1) (2024-10-18)
 
 
