@@ -140,17 +140,26 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload
 		secret.SecretID = foundSecret.ID
 	}
 
+	image, _, err := e.docker.ImageInspectWithRaw(ctx, spec.TaskTemplate.ContainerSpec.Image)
+	if err != nil {
+		return nil, errors.Wrapf(err, "get image %s", spec.TaskTemplate.ContainerSpec.Image)
+	}
+
+	// FIXME: original entrypoint overrides custom command if both (release cmd & cmd) are set
+	entrypoint := strings.Join(image.Config.Entrypoint, " ")
+	command := strings.Join(image.Config.Cmd, " ")
+
+	spec.TaskTemplate.ContainerSpec.Env = append(spec.TaskTemplate.ContainerSpec.Env, fmt.Sprintf("ENTRYPOINT=%s %s", entrypoint, command))
+
+	if spec.TaskTemplate.ContainerSpec.Command != nil {
+		entrypoint = strings.Join(spec.TaskTemplate.ContainerSpec.Command, " ")
+	}
+
+	if spec.TaskTemplate.ContainerSpec.Args != nil {
+		command = strings.Join(spec.TaskTemplate.ContainerSpec.Args, " ")
+	}
+
 	if servicePayload.ReleaseCommand.Command != "" {
-		image, _, err := e.docker.ImageInspectWithRaw(ctx, spec.TaskTemplate.ContainerSpec.Image)
-		if err != nil {
-			return nil, errors.Wrapf(err, "get image %s", spec.TaskTemplate.ContainerSpec.Image)
-		}
-
-		entrypoint := strings.Join(image.Config.Entrypoint, " ")
-		command := strings.Join(image.Config.Cmd, " ")
-
-		originalEntrypoint := entrypoint + " " + command
-
 		script := []string{
 			"#!/bin/sh",
 			"set -e",
@@ -158,7 +167,7 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload
 			servicePayload.ReleaseCommand.Command,
 			"echo 'Release command finished'",
 			"echo 'Starting original entrypoint'",
-			originalEntrypoint,
+			fmt.Sprintf("exec %s %s", entrypoint, command),
 		}
 
 		config := swarm.ConfigSpec{

@@ -82,9 +82,13 @@ func (m *MetricsAgent) ScrapeMetrics(ctx context.Context) ([]string, error) {
 }
 
 func (m *MetricsAgent) Start(ctx context.Context) error {
+	log := Logger(ctx)
+
+	log.Info("starting metrics agent")
+
 	metrics, err := m.ScrapeMetrics(ctx)
 	if err != nil {
-		log.Printf("failed to collect metrics: %v", err)
+		log.Info("failed to collect metrics", "error", err)
 	}
 
 	err = m.client.SendMetrics(ctx, metrics)
@@ -107,14 +111,14 @@ func (m *MetricsAgent) Start(ctx context.Context) error {
 
 				metrics, err := m.ScrapeMetrics(ctx)
 				if err != nil {
-					log.Printf("failed to collect metrics: %v", err)
+					log.Error("failed to collect metrics", "error", err)
 
 					continue
 				}
 
 				err = m.client.SendMetrics(ctx, metrics)
 				if err != nil {
-					log.Printf("failed to send metrics: %v", err)
+					log.Error("failed to send metrics", "error", err)
 				}
 			}
 		}

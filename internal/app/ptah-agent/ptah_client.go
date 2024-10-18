@@ -37,7 +37,9 @@ func New(version string, baseUrl string, ptahToken string, rootDir string) (*Age
 	// Create a background context for API version negotiation
 	ctx := context.Background()
 
+	slog.Debug("negotiating API version with Docker")
 	docker.NegotiateAPIVersion(ctx)
+	slog.Debug("negotiated API version with Docker", "version", docker.ClientVersion())
 
 	caddy := caddyClient.New("http://127.0.0.1:2019", http.DefaultClient)
 
@@ -172,6 +174,8 @@ func (a *Agent) Start(ctx context.Context) error {
 	ctx = WithLogger(ctx, slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
 	log := Logger(ctx)
 
+	log.Info("starting ptah agent", "version", a.Version)
+
 	a.cancel = cancel
 
 	defer a.safeClient.Close()
@@ -279,6 +283,19 @@ func (a *Agent) getNextTask(ctx context.Context) (taskId int, task interface{}, 
 }
 
 func (a *Agent) ExecTasks(ctx context.Context, jsonFilePath string) error {
+	// FIXME: de-duplicate logger instantiation with Start()
+	ptahDebug := os.Getenv("PTAH_DEBUG")
+
+	var level slog.Level
+	if ptahDebug == "true" {
+		level = slog.LevelDebug
+	} else {
+		level = slog.LevelInfo
+	}
+
+	ctx = WithLogger(ctx, slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level})))
+	log := Logger(ctx)
+
 	// Docker client should already be initialized and version negotiated in New()
 	if a.docker == nil {
 		return fmt.Errorf("docker client not initialized")
@@ -322,7 +339,7 @@ func (a *Agent) ExecTasks(ctx context.Context, jsonFilePath string) error {
 			return fmt.Errorf("error executing task %d: %w", taskRes.ID, err)
 		}
 
-		slog.Info("Task %d (Type: %d) executed successfully. Result: %+v", "task_id", taskRes.ID, "task_type", taskRes.TaskType, "result", result)
+		log.Info("task executed successfully", "task_id", taskRes.ID, "task_type", taskRes.TaskType, "result", result)
 	}
 
 	return nil

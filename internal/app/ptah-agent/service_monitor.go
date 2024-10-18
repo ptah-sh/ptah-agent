@@ -53,7 +53,7 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 	defer ticker.Stop()
 
 	// TODO: make timeout configurable
-	timeout := time.After(time.Duration(10) * time.Minute)
+	timeout := time.After(time.Duration(1) * time.Minute)
 
 	successfullChecks := 0
 
@@ -106,6 +106,9 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 				log.Debug("service inspected", "state", service.UpdateStatus.State)
 
 				switch service.UpdateStatus.State {
+				case swarm.UpdateStatePaused:
+					// FIXME: rollback the service?
+					return errors.Errorf("service update paused: %s", service.UpdateStatus.Message)
 				case swarm.UpdateStateCompleted:
 					return nil
 				case swarm.UpdateStateRollbackCompleted:
