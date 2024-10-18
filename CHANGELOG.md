@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.23.1](https://github.com/ptah-sh/ptah-agent/compare/v0.23.0...v0.23.1) (2024-10-18)
+
+
+### Bug Fixes
+
+* ptah-sh/ptah-server[#239](https://github.com/ptah-sh/ptah-agent/issues/239) set up loger instance for self-hosted installation ([9e2d3e5](https://github.com/ptah-sh/ptah-agent/commit/9e2d3e5fb161745abd69c652f3383cef315fa0a8))
+
 ## [0.23.0](https://github.com/ptah-sh/ptah-agent/compare/v0.22.0...v0.23.0) (2024-10-14)
 
 
