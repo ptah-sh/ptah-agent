@@ -53,7 +53,7 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 	defer ticker.Stop()
 
 	// TODO: make timeout configurable
-	timeout := time.After(time.Duration(1) * time.Minute)
+	timeout := time.After(time.Duration(5) * time.Minute)
 
 	successfullChecks := 0
 
