@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.0](https://github.com/ptah-sh/ptah-agent/compare/v0.23.2...v0.24.0) (2024-10-19)
+
+
+### Features
+
+* increase timeout ([1179b38](https://github.com/ptah-sh/ptah-agent/commit/1179b3823c014bc80b7a2af026a82d2dc0eda8f7))
+
 ## [0.23.2](https://github.com/ptah-sh/ptah-agent/compare/v0.23.1...v0.23.2) (2024-10-18)
 
 
