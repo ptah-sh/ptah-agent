@@ -91,7 +91,7 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 					return nil
 				}
 
-				if len(tasks) == lastTasks {
+				if lastFailedTasks > 0 && len(tasks) == lastTasks {
 					continue
 				}
 
