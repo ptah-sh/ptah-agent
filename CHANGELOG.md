@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.3](https://github.com/ptah-sh/ptah-agent/compare/v0.24.2...v0.24.3) (2024-10-20)
+
+
+### Bug Fixes
+
+* ptah-sh/ptah-server[#239](https://github.com/ptah-sh/ptah-agent/issues/239) better tracking of failed tasks ([433da8f](https://github.com/ptah-sh/ptah-agent/commit/433da8f4c2ef2923ccc7e475c53deb12642b0f34))
+
 ## [0.24.2](https://github.com/ptah-sh/ptah-agent/compare/v0.24.1...v0.24.2) (2024-10-20)
 
 
