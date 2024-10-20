@@ -89,14 +89,14 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 					return nil
 				}
 
-				tasksInDesiredState := 0
+				tasksRunning := 0
 				for _, t := range tasks {
-					if t.DesiredState == t.Status.State {
-						tasksInDesiredState++
+					if t.Status.State == swarm.TaskStateRunning {
+						tasksRunning++
 					}
 				}
 
-				if tasksInDesiredState == len(tasks) {
+				if tasksRunning == int(*service.Spec.Mode.Replicated.Replicas) {
 					successfullChecks++
 				} else {
 					successfullChecks = 0
