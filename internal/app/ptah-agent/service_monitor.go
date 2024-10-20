@@ -56,6 +56,8 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 	timeout := time.After(time.Duration(5) * time.Minute)
 
 	successfullChecks := 0
+	lastFailedTasks := 0
+	lastTasks := 0
 
 	for {
 		select {
@@ -89,6 +91,12 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 					return nil
 				}
 
+				if len(tasks) == lastTasks {
+					continue
+				}
+
+				lastTasks = len(tasks)
+
 				failedTasks := 0
 				var lastErr string
 				for _, t := range tasks {
@@ -98,12 +106,10 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 					}
 				}
 
-				if failedTasks > 5 {
-					return errors.Errorf("task failed: %s", lastErr)
-				}
-
-				if failedTasks > 0 {
+				if failedTasks > lastFailedTasks {
 					log.Debug("service has failed tasks", "failed_tasks", failedTasks, "last_error", lastErr)
+
+					lastFailedTasks = failedTasks
 
 					continue
 				}
