@@ -56,8 +56,6 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 	timeout := time.After(time.Duration(5) * time.Minute)
 
 	successfullChecks := 0
-	lastFailedTasks := 0
-	lastTasks := 0
 
 	for {
 		select {
@@ -91,30 +89,18 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 					return nil
 				}
 
-				if lastFailedTasks > 0 && len(tasks) == lastTasks {
-					continue
-				}
-
-				lastTasks = len(tasks)
-
-				failedTasks := 0
-				var lastErr string
+				tasksInDesiredState := 0
 				for _, t := range tasks {
-					if t.Status.Err != "" {
-						failedTasks++
-						lastErr = t.Status.Err
+					if t.DesiredState == t.Status.State {
+						tasksInDesiredState++
 					}
 				}
 
-				if failedTasks > lastFailedTasks {
-					log.Debug("service has failed tasks", "failed_tasks", failedTasks, "last_error", lastErr)
-
-					lastFailedTasks = failedTasks
-
-					continue
+				if tasksInDesiredState == len(tasks) {
+					successfullChecks++
+				} else {
+					successfullChecks = 0
 				}
-
-				successfullChecks++
 
 				if successfullChecks >= 3 {
 					log.Debug("service launched", "service_id", service.ID, "successfull_checks", successfullChecks)

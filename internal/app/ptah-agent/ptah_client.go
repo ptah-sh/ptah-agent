@@ -328,18 +328,17 @@ func (a *Agent) ExecTasks(ctx context.Context, jsonFilePath string) error {
 			return fmt.Errorf("error parsing task %d: %w", taskRes.ID, err)
 		}
 
-		var result interface{}
 		if taskRes.TaskType == 5 {
-			result, err = a.retryTask(ctx, executor, task, 5*time.Second, 3*time.Minute)
+			_, err = a.retryTask(ctx, executor, task, 5*time.Second, 3*time.Minute)
 		} else {
-			result, err = executor.executeTask(ctx, task)
+			_, err = executor.executeTask(ctx, task)
 		}
 
 		if err != nil {
 			return fmt.Errorf("error executing task %d: %w", taskRes.ID, err)
 		}
 
-		log.Info("task executed successfully", "task_id", taskRes.ID, "task_type", taskRes.TaskType, "result", result)
+		log.Info("task executed successfully", "task_id", taskRes.ID, "task_type", taskRes.TaskType)
 	}
 
 	return nil
