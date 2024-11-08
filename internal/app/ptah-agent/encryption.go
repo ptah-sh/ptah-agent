@@ -7,90 +7,14 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
-	"encoding/json"
 	"encoding/pem"
-	"fmt"
 
 	"github.com/pkg/errors"
-
-	"github.com/docker/docker/api/types/swarm"
-	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
+	"github.com/ptah-sh/ptah-agent/internal/app/ptah-agent/encryption"
 )
 
-type EncryptionKeyPair struct {
-	PrivateKey string `json:"private_key"`
-	PublicKey  string `json:"public_key"`
-}
-
-// getEncryptionKey checks for existing key or generates a new one
-func (e *taskExecutor) getEncryptionKey(ctx context.Context) (*EncryptionKeyPair, error) {
-	existingConfig, err := e.getConfigByName(ctx, "ptah_encryption_key")
-	if err != nil && !errors.Is(err, ErrConfigNotFound) {
-		return nil, fmt.Errorf("failed to check for existing encryption key: %v", err)
-	}
-
-	if existingConfig != nil {
-		var keyPair EncryptionKeyPair
-
-		err = json.Unmarshal(existingConfig.Spec.Data, &keyPair)
-
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal existing encryption key: %v", err)
-		}
-
-		return &keyPair, nil
-	}
-
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate RSA key pair: %v", err)
-	}
-
-	privateKeyPEM := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
-	}
-	privateKeyStr := string(pem.EncodeToMemory(privateKeyPEM))
-
-	publicKey, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal public key: %v", err)
-	}
-
-	publicKeyPEM := &pem.Block{
-		Type:  "PUBLIC KEY",
-		Bytes: publicKey,
-	}
-	publicKeyStr := string(pem.EncodeToMemory(publicKeyPEM))
-
-	keyPair := &EncryptionKeyPair{
-		PrivateKey: privateKeyStr,
-		PublicKey:  publicKeyStr,
-	}
-
-	keyPairJSON, err := json.Marshal(keyPair)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal encryption key pair: %v", err)
-	}
-
-	_, err = e.createDockerConfig(ctx, &t.CreateConfigReq{
-		SwarmConfigSpec: swarm.ConfigSpec{
-			Annotations: swarm.Annotations{
-				Name:   "ptah_encryption_key",
-				Labels: map[string]string{},
-			},
-			Data: keyPairJSON,
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to save encryption key to Docker config: %v", err)
-	}
-
-	return keyPair, nil
-}
-
 func (e *taskExecutor) decryptValue(ctx context.Context, encryptedValue string) (string, error) {
-	keyPair, err := e.getEncryptionKey(ctx)
+	keyPair, err := encryption.GetKeyPair(ctx, e.docker)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get encryption key")
 	}
@@ -119,7 +43,7 @@ func (e *taskExecutor) decryptValue(ctx context.Context, encryptedValue string) 
 }
 
 func (e *taskExecutor) encryptValue(ctx context.Context, value string) (string, error) {
-	keyPair, err := e.getEncryptionKey(ctx)
+	keyPair, err := encryption.GetKeyPair(ctx, e.docker)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get encryption key")
 	}

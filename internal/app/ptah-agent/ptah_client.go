@@ -11,6 +11,7 @@ import (
 
 	dockerClient "github.com/docker/docker/client"
 	"github.com/pkg/errors"
+	"github.com/ptah-sh/ptah-agent/internal/app/ptah-agent/encryption"
 	caddyClient "github.com/ptah-sh/ptah-agent/internal/pkg/caddy-client"
 	"github.com/ptah-sh/ptah-agent/internal/pkg/networks"
 	ptahClient "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
@@ -141,7 +142,7 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 			ManagerNodes: managerNodes,
 		}
 
-		encryptionKey, err := a.executor.getEncryptionKey(ctx)
+		encryptionKey, err := encryption.GetKeyPair(ctx, a.docker)
 		if err != nil {
 			return nil, err
 		}

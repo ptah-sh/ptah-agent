@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/pkg/errors"
+	ptahContainer "github.com/ptah-sh/ptah-agent/internal/app/ptah-agent/docker/container"
 )
 
 func (e *taskExecutor) monitorServiceLaunch(ctx context.Context, service *swarm.Service) error {
@@ -157,7 +158,7 @@ func (e *taskExecutor) monitorJobServiceLaunch(ctx context.Context, service *swa
 			for _, t := range tasks {
 				if t.JobIteration.Index == service.JobStatus.JobIteration.Index {
 					if t.Status.Err != "" {
-						logs, err := e.readContainerLogs(ctx, t.Status.ContainerStatus.ContainerID)
+						logs, err := ptahContainer.ReadLogsAsString(ctx, e.docker, t.Status.ContainerStatus.ContainerID)
 						if err != nil {
 							return fmt.Errorf("task failed with error %s, read logs failed too: %w", t.Status.Err, err)
 						}
@@ -220,7 +221,7 @@ func (e *taskExecutor) monitorJobServiceLaunch(ctx context.Context, service *swa
 
 			// FIXME: transfer all (stdout + stderr, success and error) logs to the ptah-server once logging support is added
 			if w.StatusCode != 0 {
-				logs, err := e.readContainerLogs(ctx, containerID)
+				logs, err := ptahContainer.ReadLogsAsString(ctx, e.docker, containerID)
 				if err != nil {
 					return fmt.Errorf("task failed with error %s, read logs failed too: %w", w.Error.Message, err)
 				}

@@ -155,6 +155,28 @@ type PullImageRes struct {
 	Output []string `json:"output"`
 }
 
+type PullGitRepoReq struct {
+	Repo       string
+	Ref        string
+	TargetDir  string
+	VolumeSpec mount.Mount
+}
+
+type PullGitRepoRes struct {
+	Output []string `json:"output"`
+}
+
+type BuildImageReq struct {
+	DockerImage string
+	WorkingDir  string
+	Dockerfile  string
+	VolumeSpec  mount.Mount
+}
+
+type BuildImageRes struct {
+	Output []string `json:"output"`
+}
+
 type S3StorageSpec struct {
 	Endpoint   string
 	AccessKey  string

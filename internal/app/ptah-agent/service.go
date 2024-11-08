@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/ptah-sh/ptah-agent/internal/app/ptah-agent/docker/config"
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
@@ -122,13 +123,13 @@ func (e *taskExecutor) prepareServicePayload(ctx context.Context, servicePayload
 		spec.TaskTemplate.ContainerSpec.Env = append(spec.TaskTemplate.ContainerSpec.Env, fmt.Sprintf("%s=%s", key, decryptedValue))
 	}
 
-	for _, config := range spec.TaskTemplate.ContainerSpec.Configs {
-		cfg, err := e.getConfigByName(ctx, config.ConfigName)
+	for _, swarmConfig := range spec.TaskTemplate.ContainerSpec.Configs {
+		cfg, err := config.GetByName(ctx, e.docker, swarmConfig.ConfigName)
 		if err != nil {
-			return nil, errors.Wrapf(err, "get config by name %s", config.ConfigName)
+			return nil, errors.Wrapf(err, "get config by name %s", swarmConfig.ConfigName)
 		}
 
-		config.ConfigID = cfg.ID
+		swarmConfig.ConfigID = cfg.ID
 	}
 
 	for _, secret := range spec.TaskTemplate.ContainerSpec.Secrets {
