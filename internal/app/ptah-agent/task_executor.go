@@ -72,6 +72,8 @@ func (e *taskExecutor) executeTask(ctx context.Context, anyTask interface{}) (in
 		return e.pullGitRepo(ctx, task)
 	case *t.BuildImageReq:
 		return e.buildImage(ctx, task)
+	case *t.BuildImageWithNixpacksReq:
+		return e.buildImageWithNixpacks(ctx, task)
 	default:
 		return nil, fmt.Errorf("execute task: unknown task type %T", task)
 	}

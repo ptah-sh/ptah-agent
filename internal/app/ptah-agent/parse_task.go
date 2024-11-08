@@ -62,6 +62,8 @@ func parseTask(taskType int, payload string) (interface{}, error) {
 		return unmarshalTask(payload, &ptahClient.PullGitRepoReq{})
 	case 25:
 		return unmarshalTask(payload, &ptahClient.BuildImageReq{})
+	case 26:
+		return unmarshalTask(payload, &ptahClient.BuildImageWithNixpacksReq{})
 	default:
 		return nil, fmt.Errorf("parse task: unknown task type %d", taskType)
 	}

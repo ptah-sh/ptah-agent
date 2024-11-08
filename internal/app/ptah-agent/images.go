@@ -58,6 +58,49 @@ func (e *taskExecutor) buildImage(ctx context.Context, req *t.BuildImageReq) (*t
 	return &result, nil
 }
 
+func (e *taskExecutor) buildImageWithNixpacks(ctx context.Context, req *t.BuildImageWithNixpacksReq) (*t.BuildImageWithNixpacksRes, error) {
+	var result t.BuildImageWithNixpacksRes
+
+	box := busybox.New(e.docker)
+
+	config := &busybox.Config{
+		Cmd: "/ptah/bin/nixpacks_build.sh",
+		EnvVars: []string{
+			fmt.Sprintf("TARGET_DIR=%s", req.WorkingDir),
+			fmt.Sprintf("IMAGE_NAME=%s", req.DockerImage),
+			fmt.Sprintf("NIXPACKS_FILE_PATH=%s", req.NixpacksFilePath),
+		},
+		Mounts: []mount.Mount{req.VolumeSpec},
+	}
+
+	if err := box.Start(ctx, config); err != nil {
+		return nil, fmt.Errorf("start busybox: %w", err)
+	}
+
+	defer box.Stop(ctx)
+
+	err := box.Wait(ctx)
+	if err != nil {
+		logs, logsErr := box.Logs(ctx)
+		if logsErr != nil {
+			return nil, errors.Wrap(logsErr, "get build image logs")
+		}
+
+		message := strings.Join(logs, "\n")
+
+		return nil, errors.Wrapf(err, "%s\nwait for build image", message)
+	}
+
+	logs, err := box.Logs(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "get build image logs")
+	}
+
+	result.Output = logs
+
+	return &result, nil
+}
+
 func (e *taskExecutor) pullImage(ctx context.Context, req *t.PullImageReq) (*t.PullImageRes, error) {
 	if req.AuthConfigName != "" {
 		config, err := config.GetByName(ctx, e.docker, req.AuthConfigName)

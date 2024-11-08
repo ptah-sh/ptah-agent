@@ -177,6 +177,17 @@ type BuildImageRes struct {
 	Output []string `json:"output"`
 }
 
+type BuildImageWithNixpacksReq struct {
+	DockerImage      string
+	WorkingDir       string
+	NixpacksFilePath string
+	VolumeSpec       mount.Mount
+}
+
+type BuildImageWithNixpacksRes struct {
+	Output []string `json:"output"`
+}
+
 type S3StorageSpec struct {
 	Endpoint   string
 	AccessKey  string
