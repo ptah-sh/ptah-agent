@@ -6,12 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 
+	"github.com/distribution/reference"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
 	"github.com/ptah-sh/ptah-agent/internal/app/ptah-agent/busybox"
 	"github.com/ptah-sh/ptah-agent/internal/app/ptah-agent/docker/config"
+	"github.com/ptah-sh/ptah-agent/internal/app/ptah-agent/registry"
 	t "github.com/ptah-sh/ptah-agent/internal/pkg/ptah-client"
 )
 
@@ -144,4 +147,79 @@ func (e *taskExecutor) pullImage(ctx context.Context, req *t.PullImageReq) (*t.P
 	}
 
 	return &t.PullImageRes{Output: output}, nil
+}
+
+func (e *taskExecutor) pruneDockerRegistry(ctx context.Context, req *t.PruneDockerRegistryReq) (*t.PruneDockerRegistryRes, error) {
+	log := Logger(ctx)
+
+	var result t.PruneDockerRegistryRes
+
+	tagsToKeep := make(map[string][]string)
+	for _, imageRef := range req.KeepImages {
+		ref, err := reference.ParseNamed(imageRef)
+		if err != nil {
+			return nil, fmt.Errorf("prune docker registry: %w", err)
+		}
+
+		repo := reference.Path(ref)
+
+		repoTags, ok := tagsToKeep[repo]
+		if !ok {
+			repoTags = make([]string, 0)
+		}
+
+		taggedRef, ok := reference.TagNameOnly(ref).(reference.Tagged)
+		if !ok {
+			return nil, fmt.Errorf("prune docker registry: can not get tag from ref: %s", imageRef)
+		}
+
+		tagsToKeep[repo] = append(repoTags, taggedRef.Tag())
+
+		log.Debug("parsed image ref", "ref", ref, "repo", repo, "tag", taggedRef.Tag())
+	}
+
+	registry := registry.New("http://registry.ptah.local:5050")
+
+	catalog, err := registry.Catalog(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("prune docker registry: %w", err)
+	}
+
+	for _, repo := range catalog.Repositories {
+		log.Debug("processing repo", "repo", repo)
+
+		tags, err := registry.TagsList(ctx, repo)
+		if err != nil {
+			return nil, fmt.Errorf("prune docker registry: %w", err)
+		}
+
+		for _, tag := range tags.Tags {
+			log.Debug("processing tag", "tag", tag)
+
+			if _, ok := tagsToKeep[repo]; !ok || !slices.Contains(tagsToKeep[repo], tag) {
+				manifest, err := registry.ManifestHead(ctx, repo, tag)
+				if err != nil {
+					return nil, fmt.Errorf("prune docker registry: %w", err)
+				}
+
+				log.Debug("deleting image", "repo", repo, "tag", tag, "digest", manifest.Digest)
+
+				if err := registry.ManifestDelete(ctx, repo, manifest.Digest); err != nil {
+					return nil, fmt.Errorf("prune docker registry: %w", err)
+				}
+			}
+		}
+	}
+
+	// ref, err := reference.ParseNamed("ptah/test")
+	// if err != nil {
+	// 	return nil, fmt.Errorf("prune docker registry: %w", err)
+	// }
+
+	// info, err := dockerRegistry.ParseRepositoryInfo(ref)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("prune docker registry: %w", err)
+	// }
+
+	return &result, nil
 }

@@ -281,3 +281,10 @@ type LaunchServiceRes struct {
 	Action string `json:"action"` // "created" or "updated"
 	dockerIdRes
 }
+
+type PruneDockerRegistryReq struct {
+	KeepImages []string
+}
+
+type PruneDockerRegistryRes struct {
+}

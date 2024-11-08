@@ -58,6 +58,7 @@ func (e *taskExecutor) monitorDaemonServiceLaunch(ctx context.Context, service *
 
 	successfullChecks := 0
 
+	// FIXME: check if the container is continiously restarting.
 	for {
 		select {
 		case <-ctx.Done():
