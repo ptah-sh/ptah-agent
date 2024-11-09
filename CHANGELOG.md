@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.25.0](https://github.com/ptah-sh/ptah-agent/compare/v0.24.4...v0.25.0) (2024-11-09)
+
+
+### Features
+
+* [#71](https://github.com/ptah-sh/ptah-agent/issues/71) support building docker images from git and dockerfile ([e049304](https://github.com/ptah-sh/ptah-agent/commit/e0493047d4fe05bc37601fea666f4725a5b6b097))
+* [#72](https://github.com/ptah-sh/ptah-agent/issues/72) support building images with nixpacks ([dae916a](https://github.com/ptah-sh/ptah-agent/commit/dae916ab5d0ee8f696d0d2f9b6edb9b815973fb6))
+* [#73](https://github.com/ptah-sh/ptah-agent/issues/73) support registry data prune ([897fc80](https://github.com/ptah-sh/ptah-agent/commit/897fc80dd4afa66c58628a01d5c6a511ba4dc40b))
+* [#75](https://github.com/ptah-sh/ptah-agent/issues/75) generate ssh rsa key pair ([8c8b6de](https://github.com/ptah-sh/ptah-agent/commit/8c8b6de58e4ea3f81cc291e60ba46d7f81dff5d8))
+
 ## [0.24.4](https://github.com/ptah-sh/ptah-agent/compare/v0.24.3...v0.24.4) (2024-10-20)
 
 
