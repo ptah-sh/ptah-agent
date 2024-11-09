@@ -147,7 +147,14 @@ func (a *Agent) sendStartedEvent(ctx context.Context) (*ptahClient.StartedRes, e
 			return nil, err
 		}
 
+		// Generate and store SSH keypair in Docker secrets
+		keyPair, err := encryption.GetSshKeyPair(ctx, a.docker)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate SSH keypair: %w", err)
+		}
+
 		startedReq.SwarmData.EncryptionKey = encryptionKey.PublicKey
+		startedReq.SwarmData.PublicSSHKey = keyPair.PublicKey
 	}
 
 	slog.Info("sending started event", "base_url", a.ptah.BaseUrl)

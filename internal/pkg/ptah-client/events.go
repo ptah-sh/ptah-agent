@@ -18,6 +18,7 @@ type SwarmData struct {
 	JoinTokens    JoinTokens    `json:"joinTokens"`
 	ManagerNodes  []ManagerNode `json:"managerNodes"`
 	EncryptionKey string        `json:"encryptionKey"`
+	PublicSSHKey  string        `json:"publicSSHKey"`
 }
 
 type NodeData struct {

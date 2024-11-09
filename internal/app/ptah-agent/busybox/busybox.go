@@ -60,34 +60,25 @@ func (b *busybox) Start(ctx context.Context, cfg *Config) error {
 	}
 
 	// Get encryption keys
-	keyPair, err := encryption.GetKeyPair(ctx, b.docker)
+	keyPair, err := encryption.GetSshKeyPair(ctx, b.docker)
 	if err != nil {
 		return fmt.Errorf("failed to get encryption keys: %w", err)
 	}
 
-	// Add commands to create .ssh directory and write keys
-	setupCmd := fmt.Sprintf(`
-		echo 'Store encryption keys' && \
-		mkdir -p /root/.ssh && \
-		echo '%s' > /root/.ssh/id_rsa && \
-		echo '%s' > /root/.ssh/id_rsa.pub && \
-		chmod 600 /root/.ssh/id_rsa && \
-		chmod 644 /root/.ssh/id_rsa.pub && \
-		echo 'Encryption keys stored' && \
-		%s
-	`, keyPair.PrivateKey, keyPair.PublicKey, cfg.Cmd)
+	envVars := cfg.EnvVars
+	envVars = append(envVars, fmt.Sprintf("PTAH_SSH_PUBLIC_KEY=%s", keyPair.PublicKey))
+	envVars = append(envVars, fmt.Sprintf("PTAH_SSH_PRIVATE_KEY=%s", keyPair.PrivateKey))
 
 	// Prepare container configuration
 	containerConfig := &container.Config{
 		Image: busyboxImage,
 		Entrypoint: []string{
-			"sh",
-			"-c",
+			"/ptah/bin/entrypoint.sh",
 		},
 		Cmd: []string{
-			setupCmd,
+			cfg.Cmd,
 		},
-		Env: cfg.EnvVars,
+		Env: envVars,
 	}
 
 	// Add Docker socket mount to existing mounts
